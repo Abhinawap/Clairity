@@ -4,7 +4,12 @@
 
 ### Issue tracker
 
-Issues and specs live in GitHub Issues for `Abhinawap/Clairity`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues for `Abhinawap/Clairity`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Specs and private docs
+
+Product spec: `docs/specs/project-spec.md`; feature specs sit beside it.
+Paths in `docs/agents/private-paths.txt` are stripped from the public repo: keep their content in those files, and link to them rather than copying from them.
 
 ### Triage labels
 
