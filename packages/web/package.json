@@ -12,9 +12,10 @@
   },
   "dependencies": {
     "next": "16.4.2",
+    "parser": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "parser": "workspace:*"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
