@@ -19,10 +19,9 @@ jobs:
           runtime: node@22
       - run: pnpm -r --if-present run check-types
       - run: pnpm -r --if-present run lint
-      # GLOSSARY.md _Avoid_ terms that are wrong in every context, camelCase included; context-dependent ones stay with review.
-      # Text node allows no "_" and text content no join, so DOM's TEXT_NODE and textContent pass. project-spec.md predates the glossary.
+      # retired glossary Avoid phrases, which have no correct use here (see docs/agents/domain.md); project-spec.md predates the glossary
       - run: |
-          ! git grep -nIiE '\btext[ -]?nodes?\b|\block(s|ed)?\b|\bnon[ _-]?editable\b|\b(unknown|unsupported)[ _-]?class(es)?\b|\bstyling[ _-]?modes?\b|\btext[ -]content\b|\bvisual[ _-]?changes?\b' \
+          ! git grep -nIiE '\blocked[ _-]?(node|text)|\bnon[ _-]?editable|\b(unknown|unsupported)[ _-]?class|\bstyling[ _-]?mode|\btext[ -]content' \
             -- packages docs/specs ':!docs/specs/project-spec.md'
       - run: pnpm -r --if-present run test
       - run: pnpm -r --if-present run build
