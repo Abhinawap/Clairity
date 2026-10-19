@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "test:demo": "DEMO_DIR=${DEMO_DIR:-../../../clairity-demo} vitest run test/demo.test.ts --silent=false",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
