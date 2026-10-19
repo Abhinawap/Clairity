@@ -4,6 +4,8 @@ import { SessionManager } from "./sessionManager";
 let sessionManager: SessionManager | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
+  vscode.window.showInformationMessage("Clairity: activate() ran!");
+  
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   if (!workspaceRoot) {
