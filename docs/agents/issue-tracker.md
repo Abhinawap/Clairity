@@ -4,11 +4,13 @@ Issues for this repo live as GitHub issues; specs live in `docs/specs/`. Use the
 
 ## Conventions
 
+- **Start a ticket**: `git switch -c <type>/<slug> origin/main` (types as in history: `feat`, `docs`, `chore`, `spike`); one branch and one PR per ticket.
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
 - **Read an issue**: `gh issue view <number> --json number,title,body,labels,comments`.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Make an issue a sub-issue of a parent**: `gh issue create --parent <parent> ...`, or `gh issue edit <parent> --add-sub-issue <child>` afterwards (`gh` 2.94+). Older `gh`: `gh api --method POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>` (database id, as in **Blocking** below). Without sub-issues, put `Part of #<parent>` at the top of the child body.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
+- **Defer a review finding**: when a finding belongs to a later ticket, `gh issue comment <n>` on that ticket with the finding and the PR link, before the session ends.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
 - **Close**: `gh issue close <number> --comment "..."`
 
