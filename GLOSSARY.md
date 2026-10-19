@@ -23,3 +23,15 @@ _Avoid_: locked node, non-editable node
 **Styling convention**:
 How a component expresses its style: Tailwind classes, inline styles, or CSS-in-JS.
 _Avoid_: styling mode
+
+**Edit**:
+A change to one node's style or text made directly in the inspector or on the canvas, with no AI involved.
+_Avoid_: change (that is an AI suggestion), visual change
+
+**Proposal**:
+The set of Changes the model suggests in answer to one request.
+_Avoid_: suggestion, AI result
+
+**Change**:
+One item in a Proposal, which the developer accepts or rejects on its own.
+_Avoid_: edit, diff
