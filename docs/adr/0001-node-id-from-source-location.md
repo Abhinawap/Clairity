@@ -9,4 +9,4 @@ A node's id is the first 12 hex characters of `sha1("<project-relative POSIX pat
 
 ## Consequences
 
-Any edit that shifts lines above a node changes its id. The extension handles this with an `idMap` on `graph:patch` so the web app can keep the current selection. A class edit that stays on one line keeps the id of every node starting on another line; nodes later on the same line shift column and get new ids.
+Any edit that shifts lines above a node changes its id. `graph:patch` pairs each node's old id (`changedNodeIds[i]`) with its new data (`nodes[i]`), so the web app can replace the node and keep the current selection. When nodes are added or removed there is nothing to pair, so the extension sends `graph:full` instead and the selection survives only if its id still exists (agreed 2026-10-19; not yet tested in the extension). A class edit that stays on one line keeps the id of every node starting on another line; nodes later on the same line shift column and get new ids.
