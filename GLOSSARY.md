@@ -9,8 +9,12 @@ The tree of nodes describing one page's UI, parsed from its source files.
 _Avoid_: IR, layer tree (that is the UI view of the scene graph), DOM
 
 **Node**:
-One element, component usage or run of text in the scene graph, tied to exactly one place in source.
+One element, component usage or text run in the scene graph, tied to exactly one place in source.
 _Avoid_: layer, element (when meaning the scene graph entry)
+
+**Text run**:
+A Node holding one stretch of literal text written between tags in source; a heading split by a `<br>` holds two.
+_Avoid_: text node (that is the DOM's), text content, locked text
 
 **Passthrough class**:
 A styling token kept verbatim on a node because the tool does not model it, such as a breakpoint variant or an arbitrary value.

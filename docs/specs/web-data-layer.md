@@ -16,7 +16,7 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 
 1. As the frontend partner, I want the web app package to exist with a working dev server, so that I can start building components on the same app.
 2. As the frontend partner, I want to open the web app without any session ID and see a real scene graph, so that I can build the layer tree before the broker exists.
-3. As the frontend partner, I want the scene graph to come from a real parsed component, so that my layer tree handles real nesting, text Nodes, component Nodes and Read-only nodes.
+3. As the frontend partner, I want the scene graph to come from a real parsed component, so that my layer tree handles real nesting, text runs, component Nodes and Read-only nodes.
 4. As the frontend partner, I want to read the scene graph from the store, so that I never parse messages in a component.
 5. As the frontend partner, I want to select a Node by id, so that clicking the canvas or the layer tree highlights the same Node in both.
 6. As the frontend partner, I want the selected Node available from the store, so that the inspector can show its properties without searching the tree itself.
@@ -24,9 +24,9 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 8. As the frontend partner, I want an Edit to carry several style properties at once, so that one drag can change width and height together.
 9. As the frontend partner, I want the store to show only values the extension has confirmed, so that the inspector never shows a value that is not in the source file.
 10. As the frontend partner, I want an Edit on a Read-only node to do nothing, so that a stray control cannot try to rewrite code the tool cannot edit safely.
-11. As the frontend partner, I want each Read-only node's reason in the store, so that the inspector can explain why it is locked.
+11. As the frontend partner, I want each Read-only node's reason in the store, so that the inspector can explain why it is Read-only.
 12. As the frontend partner, I want the selection to stay on a Node after its Edit is confirmed, so that the inspector does not lose its place mid-adjustment.
-13. As the frontend partner, I want to change the selected element's text content with one action, so that text editing in the inspector works the same way as style Edits.
+13. As the frontend partner, I want to change any of the selected Node's text runs with one action, so that text editing in the inspector works the same way as style Edits.
 14. As the frontend partner, I want to ask for a Node's source file and find its contents in the store, so that Code view can show and highlight the right lines.
 15. As the frontend partner, I want to send a prompt scoped to the selected Node or to the whole page, so that the AI panel's scope selector has one action behind it.
 16. As the frontend partner, I want the text of a streaming Proposal in the store as it arrives, so that the AI panel shows progress instead of a spinner.
@@ -65,7 +65,7 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 
 - A session is created against an extension link: the fake extension, or (later) the broker connection. Everything below is the same for both.
 - State the UI reads: the scene graph roots, the selected Node id, the connection state, source files by path, the pending Proposal, the text of a Proposal still streaming, and the last error from the extension.
-- Actions the UI calls: select a Node; apply an Edit (Node id plus a partial style); change an element's text content (Node id plus the new text); read a source file; request a Proposal (scope, prompt, optional Node id); apply a Proposal (the accepted Change ids).
+- Actions the UI calls: select a Node; apply an Edit (Node id plus a partial style); change a text run (its id plus the new text); read a source file; request a Proposal (scope, prompt, optional Node id); apply a Proposal (the accepted Change ids).
 - Selection is local state. Selecting sends nothing to the extension.
 
 **Store**
@@ -74,13 +74,12 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 - Only confirmed state: actions send messages and change nothing. The store changes when the extension's reply arrives. An inspector control keeps its own draft value while the user types; that is a UI concern.
 - An Edit on a Node whose `editable` flag is false, or on an id not in the scene graph, sends nothing. The data layer reads the parser's flag and never works out the Read-only rule itself (CODING_STANDARDS: one implementation per shared contract).
 
-**Text Edits** (decided 2026-10-19)
+**Text Edits** (decided 2026-10-19; per-run editing replaced the one-run rule the same day)
 
-- The inspector edits the selected element's text content, so the action takes the element's id, the one a canvas click gives, as an Edit does.
-- An element's text is editable only when its children are exactly one text Node, like the hero's button or the Badge. Mixed content, like a heading split by a `<br>` or a link holding text and a `<span>`, stays locked.
-- An element's Read-only flag locks its style, not its text: the hero's spread-props button keeps "Learn More" editable. The text Node's own `editable` flag is still read.
-- `text:apply` carries the text Node's id, so the message the extension receives does not change.
-- One exported helper answers which text Node an element's text Edit changes, if any. The inspector and the action both use it, so no component works the rule out.
+- Every text run is edited on its own. The inspector shows one field for each of the selected Node's own text runs, its direct children: the hero's `h1` shows "The website builder you're" and "looking for", the `a` shows "Start", and the `span` inside it shows "->". A canvas click selects the innermost element under the pointer, so the text the developer clicked is always one of the fields. When the layer tree selects a text run itself, the inspector edits that run.
+- One exported helper lists a Node's own text runs. The inspector reads it and the action takes one of its ids, so no component searches the tree.
+- A text Edit sends `text:apply` with the text run's id, so the message the extension receives does not change. An id that is not a text run, a text run the parser marked Read-only, or an id not in the scene graph sends nothing.
+- An element's Read-only flag locks its style, not its text runs: the hero's spread-props button keeps "Learn More" editable. A component usage's text runs are edited the same way, like the "Save" in `<Button>Save</Button>`.
 
 **Rules for incoming messages**
 
