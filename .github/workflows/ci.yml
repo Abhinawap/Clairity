@@ -20,3 +20,6 @@ jobs:
       - run: pnpm -r --if-present run check-types
       - run: pnpm -r --if-present run lint
       - run: pnpm -r --if-present run test
+      - run: pnpm -r --if-present run build
+      # next build rewrites tracked files it disagrees with (tsconfig); fail instead of drifting
+      - run: git diff --exit-code
