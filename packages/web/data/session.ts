@@ -1,6 +1,6 @@
 import type { IRNode } from "parser";
 import { createStore } from "zustand/vanilla";
-import type { EditApplyMessage, ProtocolMessage, TextApplyMessage } from "./protocol";
+import type { EditApplyMessage, ProtocolMessage } from "./protocol";
 
 // The extension side of the protocol: the fake extension, or (later) the broker connection.
 export type ExtensionLink = {
@@ -19,7 +19,8 @@ export type SessionState = {
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
   // A Read-only node, or an id not in the scene graph, sends nothing.
   applyEdit(nodeId: string, style: EditApplyMessage["style"]): void;
-  // A text Edit: same rules as applyEdit, for a text Node's content.
+  // A text Edit on an element: sends its text Node's id (see textRun) and, like applyEdit, changes nothing until the patch.
+  // Locked text, or an id not in the scene graph, sends nothing.
   applyText(nodeId: string, text: string): void;
 };
 
@@ -32,6 +33,13 @@ const replaceNode = (nodes: IRNode[], id: string, node: IRNode): IRNode[] =>
   nodes.map((n) => (n.id === id ? node : { ...n, children: replaceNode(n.children, id, node) }));
 
 export const selectedNode = (state: SessionState) => findNode(state.roots, state.selectedId);
+
+// The text Node an element's text Edit changes: its only child, when that child is a text Node the parser left editable.
+// Anything else, like text split by a <br>, keeps the element's text locked. The element's own Read-only flag locks only its style.
+export const textRun = (node: IRNode | undefined) => {
+  const [run, ...rest] = node?.children ?? [];
+  return run?.type === "text" && run.editable && !rest.length ? run : undefined;
+};
 
 // Every incoming message goes through here. Messages meant for the extension, and unknown types, change nothing.
 function applyMessage(state: SessionState, message: ProtocolMessage): SessionState {
@@ -49,18 +57,18 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
 }
 
 export function createSession(link: ExtensionLink) {
-  const session = createStore<SessionState>()((set, get) => {
-    const sendEdit = (message: EditApplyMessage | TextApplyMessage) => {
-      if (findNode(get().roots, message.nodeId)?.editable) link.send(message);
-    };
-    return {
-      roots: [],
-      connection: "connecting",
-      select: (id) => set({ selectedId: id }),
-      applyEdit: (nodeId, style) => sendEdit({ type: "edit:apply", nodeId, style }),
-      applyText: (nodeId, text) => sendEdit({ type: "text:apply", nodeId, text }),
-    };
-  });
+  const session = createStore<SessionState>()((set, get) => ({
+    roots: [],
+    connection: "connecting",
+    select: (id) => set({ selectedId: id }),
+    applyEdit(nodeId, style) {
+      if (findNode(get().roots, nodeId)?.editable) link.send({ type: "edit:apply", nodeId, style });
+    },
+    applyText(nodeId, text) {
+      const run = textRun(findNode(get().roots, nodeId));
+      if (run) link.send({ type: "text:apply", nodeId: run.id, text });
+    },
+  }));
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),
     (connection) => session.setState({ connection }),

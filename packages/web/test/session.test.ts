@@ -3,7 +3,7 @@ import { type IRNode, parseFile } from "parser";
 import { expect, it } from "vitest";
 import { fakeExtension } from "../data/fake-extension";
 import type { ProtocolMessage } from "../data/protocol";
-import { createSession, findNode, selectedNode } from "../data/session";
+import { createSession, findNode, selectedNode, textRun } from "../data/session";
 
 const code = readFileSync(new URL("../../parser/test/fixtures/hero.tsx", import.meta.url), "utf8");
 const roots = parseFile(code, "components/hero.tsx");
@@ -76,33 +76,42 @@ it("keeps the edited Node selected, children included, after the extension confi
   expect(selected?.children.map((n) => n.name)).toEqual(["#text", "br", "#text"]);
 });
 
-it("sends one text Edit, and shows the new text only once the extension confirms it", async () => {
+it("sends one text Edit for an element's text Node, and shows the new text only once the extension confirms it", async () => {
   const fake = fakeExtension(roots);
   const session = createSession(fake.link);
-  const text = byName("h1").children[0];
-  session.getState().applyText(text.id, "The page builder you're");
-  expect(fake.received).toEqual([{ type: "text:apply", nodeId: text.id, text: "The page builder you're" }]);
-  expect(findNode(session.getState().roots, text.id)?.text).toBe("The website builder you're");
+  const badge = roots[1];
+  const text = badge.children[0];
+  session.getState().applyText(badge.id, "Newer");
+  expect(fake.received).toEqual([{ type: "text:apply", nodeId: text.id, text: "Newer" }]);
+  expect(findNode(session.getState().roots, text.id)?.text).toBe("New");
   await wire();
-  expect(findNode(session.getState().roots, text.id)?.text).toBe("The page builder you're");
+  expect(findNode(session.getState().roots, text.id)?.text).toBe("Newer");
 });
 
-it("sends nothing for a text Edit on a Read-only node or an id not in the scene graph", async () => {
+it("sends a text Edit for a Read-only element's text Node, since Read-only locks only its style", () => {
+  const fake = fakeExtension(roots);
+  const button = byName("button");
+  createSession(fake.link).getState().applyText(button.id, "Learn Less");
+  expect(fake.received).toEqual([{ type: "text:apply", nodeId: button.children[0].id, text: "Learn Less" }]);
+});
+
+it("sends nothing for a text Edit on an element whose children are not exactly one text Node, or an id not in the scene graph", async () => {
   const fake = fakeExtension(roots);
   const session = createSession(fake.link);
   const before = session.getState();
-  session.getState().applyText(byName("button").id, "Learn Less");
-  session.getState().applyText("components/hero.tsx:999:1:nope", "Learn Less");
+  for (const name of ["h1", "a", "ul"]) session.getState().applyText(byName(name).id, "Locked");
+  session.getState().applyText("components/hero.tsx:999:1:nope", "Locked");
   await wire();
   expect(fake.received).toEqual([]);
   expect(session.getState()).toBe(before);
 });
 
-it("keeps the text Node selected after the extension confirms its text Edit", async () => {
+it("keeps the element selected after the extension confirms its text Edit", async () => {
   const session = createSession(fakeExtension(roots).link);
-  const text = byName("h1").children[2];
-  session.getState().select(text.id);
-  session.getState().applyText(text.id, "looking for now");
+  const button = byName("button");
+  session.getState().select(button.id);
+  session.getState().applyText(button.id, "Learn Less");
   await wire();
-  expect(selectedNode(session.getState())?.text).toBe("looking for now");
+  expect(selectedNode(session.getState())?.id).toBe(button.id);
+  expect(textRun(selectedNode(session.getState()))?.text).toBe("Learn Less");
 });

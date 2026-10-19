@@ -26,7 +26,7 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 10. As the frontend partner, I want an Edit on a Read-only node to do nothing, so that a stray control cannot try to rewrite code the tool cannot edit safely.
 11. As the frontend partner, I want each Read-only node's reason in the store, so that the inspector can explain why it is locked.
 12. As the frontend partner, I want the selection to stay on a Node after its Edit is confirmed, so that the inspector does not lose its place mid-adjustment.
-13. As the frontend partner, I want to change a text Node's content with one action, so that inline text editing works the same way as style Edits.
+13. As the frontend partner, I want to change the selected element's text content with one action, so that text editing in the inspector works the same way as style Edits.
 14. As the frontend partner, I want to ask for a Node's source file and find its contents in the store, so that Code view can show and highlight the right lines.
 15. As the frontend partner, I want to send a prompt scoped to the selected Node or to the whole page, so that the AI panel's scope selector has one action behind it.
 16. As the frontend partner, I want the text of a streaming Proposal in the store as it arrives, so that the AI panel shows progress instead of a spinner.
@@ -65,14 +65,22 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 
 - A session is created against an extension link: the fake extension, or (later) the broker connection. Everything below is the same for both.
 - State the UI reads: the scene graph roots, the selected Node id, the connection state, source files by path, the pending Proposal, the text of a Proposal still streaming, and the last error from the extension.
-- Actions the UI calls: select a Node; apply an Edit (Node id plus a partial style); change a text Node's content; read a source file; request a Proposal (scope, prompt, optional Node id); apply a Proposal (the accepted Change ids).
+- Actions the UI calls: select a Node; apply an Edit (Node id plus a partial style); change an element's text content (Node id plus the new text); read a source file; request a Proposal (scope, prompt, optional Node id); apply a Proposal (the accepted Change ids).
 - Selection is local state. Selecting sends nothing to the extension.
 
 **Store**
 
 - Zustand, as the project spec says. Every incoming message goes through one pure function from (state, message) to new state.
 - Only confirmed state: actions send messages and change nothing. The store changes when the extension's reply arrives. An inspector control keeps its own draft value while the user types; that is a UI concern.
-- An Edit or text change on a Node whose `editable` flag is false, or on an id not in the scene graph, sends nothing. The data layer reads the parser's flag and never works out the Read-only rule itself (CODING_STANDARDS: one implementation per shared contract).
+- An Edit on a Node whose `editable` flag is false, or on an id not in the scene graph, sends nothing. The data layer reads the parser's flag and never works out the Read-only rule itself (CODING_STANDARDS: one implementation per shared contract).
+
+**Text Edits** (decided 2026-10-19)
+
+- The inspector edits the selected element's text content, so the action takes the element's id, the one a canvas click gives, as an Edit does.
+- An element's text is editable only when its children are exactly one text Node, like the hero's button or the Badge. Mixed content, like a heading split by a `<br>` or a link holding text and a `<span>`, stays locked.
+- An element's Read-only flag locks its style, not its text: the hero's spread-props button keeps "Learn More" editable. The text Node's own `editable` flag is still read.
+- `text:apply` carries the text Node's id, so the message the extension receives does not change.
+- One exported helper answers which text Node an element's text Edit changes, if any. The inspector and the action both use it, so no component works the rule out.
 
 **Rules for incoming messages**
 
