@@ -6,7 +6,7 @@ Issues for this repo live as GitHub issues; specs live in `docs/specs/`. Use the
 
 - **Start a ticket**: `git switch -c <type>/<slug> origin/main` (types as in history: `feat`, `docs`, `chore`, `spike`); one branch and one PR per ticket.
 - **Cleanup found mid-ticket** (audit cuts, config leftovers): its own `chore/<slug>` branch from `origin/main` and its own PR, so a ticket PR carries only its ticket.
-- **Open a PR** once `/code-review` has seen the branch's last commit. A rework after review gets its own review; one that changes no behaviour gets the Standards axis only.
+- **Open a PR** once `/code-review` has seen the branch's last commit. A rework after review gets its own review; one that changes no behaviour gets the Standards axis only. In a PR body's Mermaid diagram, join clauses with a comma or "and": Mermaid ends a statement at `;`, and GitHub then can't render the diagram.
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
 - **Read an issue**: `gh issue view <number> --json number,title,body,labels,comments`.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
