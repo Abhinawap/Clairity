@@ -19,9 +19,10 @@ export type SessionState = {
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
   // A Read-only node, or an id not in the scene graph, sends nothing.
   applyEdit(nodeId: string, style: EditApplyMessage["style"]): void;
-  // A text Edit on an element: sends its text Node's id (see textRun) and, like applyEdit, changes nothing until the patch.
-  // Locked text, or an id not in the scene graph, sends nothing.
-  applyText(nodeId: string, text: string): void;
+  // A text Edit on one text run (see textRuns): like applyEdit, it sends the run's id and changes nothing until the patch.
+  // An id that is not a text run, a Read-only text run, or an id not in the scene graph sends nothing.
+  // An element's Read-only flag locks only its style, so its text runs stay editable.
+  applyText(runId: string, text: string): void;
 };
 
 const flatten = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)]);
@@ -34,12 +35,9 @@ const replaceNode = (nodes: IRNode[], id: string, node: IRNode): IRNode[] =>
 
 export const selectedNode = (state: SessionState) => findNode(state.roots, state.selectedId);
 
-// The text Node an element's text Edit changes: its only child, when that child is a text Node the parser left editable.
-// Anything else, like text split by a <br>, keeps the element's text locked. The element's own Read-only flag locks only its style.
-export const textRun = (node: IRNode | undefined) => {
-  const [run, ...rest] = node?.children ?? [];
-  return run?.type === "text" && run.editable && !rest.length ? run : undefined;
-};
+// A Node's own text runs, one inspector field each: its direct children, or the run itself when a text run is selected.
+export const textRuns = (node: IRNode | undefined) =>
+  node?.type === "text" ? [node] : (node?.children ?? []).filter((n) => n.type === "text");
 
 // Every incoming message goes through here. Messages meant for the extension, and unknown types, change nothing.
 function applyMessage(state: SessionState, message: ProtocolMessage): SessionState {
@@ -64,9 +62,9 @@ export function createSession(link: ExtensionLink) {
     applyEdit(nodeId, style) {
       if (findNode(get().roots, nodeId)?.editable) link.send({ type: "edit:apply", nodeId, style });
     },
-    applyText(nodeId, text) {
-      const run = textRun(findNode(get().roots, nodeId));
-      if (run) link.send({ type: "text:apply", nodeId: run.id, text });
+    applyText(runId, text) {
+      const run = findNode(get().roots, runId);
+      if (run?.type === "text" && run.editable) link.send({ type: "text:apply", nodeId: runId, text });
     },
   }));
   link.open(
