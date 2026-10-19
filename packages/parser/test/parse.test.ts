@@ -21,7 +21,7 @@ describe("parseFile", () => {
     expect(new Set(all(roots).map((n) => n.id)).size).toBe(all(roots).length);
   });
 
-  it("points every element and trimmed text node at its own source", () => {
+  it("points every element and trimmed text run at its own source", () => {
     for (const name of ["Image", "br", "li", "motion.div"]) expect(at(find(name))).toMatch(new RegExp(`^<${name}\\b`));
     expect(at(find("h1").children[0])).toMatch(/^The website builder/);
     expect(at(find("h1").children[2])).toMatch(/^looking for/);
