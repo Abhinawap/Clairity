@@ -19,5 +19,7 @@ jobs:
           runtime: node@22
       - run: pnpm -r --if-present run check-types
       - run: pnpm -r --if-present run lint
-      # xvfb: the extension's vscode-test (feat/scaffold-monorepo) needs a display
-      - run: xvfb-run -a pnpm -r --if-present run test
+      - run: pnpm -r --if-present run test
+      - run: pnpm -r --if-present run build
+      # next build rewrites tracked files it disagrees with (tsconfig); fail instead of drifting
+      - run: git diff --exit-code
