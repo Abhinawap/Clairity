@@ -19,6 +19,11 @@ jobs:
           runtime: node@22
       - run: pnpm -r --if-present run check-types
       - run: pnpm -r --if-present run lint
+      # retired glossary Avoid phrases, which have no correct use here (see docs/agents/domain.md); project-spec.md predates the glossary
+      # ponytail: word-start match only, so prefixed names (isLockedNode) pass; text content takes no "_" or join so DOM's textContent passes
+      - run: |
+          ! git grep -nIiE '\blocked[ _-]?(node|text)|\bnon[ _-]?editable|\b(unknown|unsupported)[ _-]?class|\bstyling[ _-]?mode|\btext[ -]content' \
+            -- packages docs/specs ':!docs/specs/project-spec.md'
       - run: pnpm -r --if-present run test
       - run: pnpm -r --if-present run build
       # next build rewrites tracked files it disagrees with (tsconfig); fail instead of drifting
