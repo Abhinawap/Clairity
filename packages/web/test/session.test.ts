@@ -75,3 +75,34 @@ it("keeps the edited Node selected, children included, after the extension confi
   expect(selected?.style.color).toBe("#111827");
   expect(selected?.children.map((n) => n.name)).toEqual(["#text", "br", "#text"]);
 });
+
+it("sends one text Edit, and shows the new text only once the extension confirms it", async () => {
+  const fake = fakeExtension(roots);
+  const session = createSession(fake.link);
+  const text = byName("h1").children[0];
+  session.getState().applyText(text.id, "The page builder you're");
+  expect(fake.received).toEqual([{ type: "text:apply", nodeId: text.id, text: "The page builder you're" }]);
+  expect(findNode(session.getState().roots, text.id)?.text).toBe("The website builder you're");
+  await wire();
+  expect(findNode(session.getState().roots, text.id)?.text).toBe("The page builder you're");
+});
+
+it("sends nothing for a text Edit on a Read-only node or an id not in the scene graph", async () => {
+  const fake = fakeExtension(roots);
+  const session = createSession(fake.link);
+  const before = session.getState();
+  session.getState().applyText(byName("button").id, "Learn Less");
+  session.getState().applyText("components/hero.tsx:999:1:nope", "Learn Less");
+  await wire();
+  expect(fake.received).toEqual([]);
+  expect(session.getState()).toBe(before);
+});
+
+it("keeps the text Node selected after the extension confirms its text Edit", async () => {
+  const session = createSession(fakeExtension(roots).link);
+  const text = byName("h1").children[2];
+  session.getState().select(text.id);
+  session.getState().applyText(text.id, "looking for now");
+  await wire();
+  expect(selectedNode(session.getState())?.text).toBe("looking for now");
+});

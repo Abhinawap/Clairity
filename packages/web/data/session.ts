@@ -1,6 +1,6 @@
 import type { IRNode } from "parser";
 import { createStore } from "zustand/vanilla";
-import type { EditApplyMessage, ProtocolMessage } from "./protocol";
+import type { EditApplyMessage, ProtocolMessage, TextApplyMessage } from "./protocol";
 
 // The extension side of the protocol: the fake extension, or (later) the broker connection.
 export type ExtensionLink = {
@@ -19,6 +19,8 @@ export type SessionState = {
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
   // A Read-only node, or an id not in the scene graph, sends nothing.
   applyEdit(nodeId: string, style: EditApplyMessage["style"]): void;
+  // A text Edit: same rules as applyEdit, for a text Node's content.
+  applyText(nodeId: string, text: string): void;
 };
 
 const flatten = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)]);
@@ -47,14 +49,18 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
 }
 
 export function createSession(link: ExtensionLink) {
-  const session = createStore<SessionState>()((set, get) => ({
-    roots: [],
-    connection: "connecting",
-    select: (id) => set({ selectedId: id }),
-    applyEdit(nodeId, style) {
-      if (findNode(get().roots, nodeId)?.editable) link.send({ type: "edit:apply", nodeId, style });
-    },
-  }));
+  const session = createStore<SessionState>()((set, get) => {
+    const sendEdit = (message: EditApplyMessage | TextApplyMessage) => {
+      if (findNode(get().roots, message.nodeId)?.editable) link.send(message);
+    };
+    return {
+      roots: [],
+      connection: "connecting",
+      select: (id) => set({ selectedId: id }),
+      applyEdit: (nodeId, style) => sendEdit({ type: "edit:apply", nodeId, style }),
+      applyText: (nodeId, text) => sendEdit({ type: "text:apply", nodeId, text }),
+    };
+  });
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),
     (connection) => session.setState({ connection }),
