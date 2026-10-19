@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm version comes from packageManager in package.json; also runs pnpm install
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@22
+      - run: pnpm -r --if-present run check-types
+      # xvfb: the extension's vscode-test (feat/scaffold-monorepo) needs a display
+      - run: xvfb-run -a pnpm -r --if-present run test
