@@ -29,7 +29,7 @@ describe("parseFile", () => {
 
   it("builds the scene graph: text, components, literal props, read-only nodes, hoisted fragments, .map and conditionals", () => {
     const box = (top: string, right: string, bottom: string, left: string) => ({ top, right, bottom, left });
-    const textNode = (text: string) => ({ type: "text", name: "#text", text, children: [] });
+    const textRun = (text: string) => ({ type: "text", name: "#text", text, children: [] });
     const notLiteral = { editable: false, reason: "className is not a string literal" };
 
     expect(roots[0]).toMatchObject({
@@ -45,12 +45,12 @@ describe("parseFile", () => {
             props: { "data-aos-delay": 150 },
             style: { margin: box("0", "0", "1.5rem", "0"), fontSize: "var(--text-5xl)", fontWeight: "var(--font-weight-bold)" },
             passthroughClasses: ["md:text-6xl"],
-            children: [textNode("The website builder you're"), { name: "br", passthroughClasses: ["max-lg:hidden"] }, textNode("looking for")],
+            children: [textRun("The website builder you're"), { name: "br", passthroughClasses: ["max-lg:hidden"] }, textRun("looking for")],
           },
-          { name: "a", props: { href: "#0" }, ...notLiteral, children: [textNode("Start"), { name: "span", ...notLiteral, children: [textNode("->")] }] },
+          { name: "a", props: { href: "#0" }, ...notLiteral, children: [textRun("Start"), { name: "span", ...notLiteral, children: [textRun("->")] }] },
           {
             name: "button", editable: false, reason: "spreads props, so its className may be overridden",
-            style: { width: "15rem", borderRadius: "var(--radius-lg)" }, children: [textNode("Learn More")],
+            style: { width: "15rem", borderRadius: "var(--radius-lg)" }, children: [textRun("Learn More")],
           },
           { name: "ul", editable: true, passthroughClasses: ["[&_span]:opacity-0"], children: [{ name: "li", props: {}, children: [] }] },
           { type: "component", name: "motion.div", editable: true, props: { hidden: true }, style: { margin: box("1rem", "0", "0", "0") }, children: [] },
@@ -59,7 +59,7 @@ describe("parseFile", () => {
     });
     expect(find("Image").props).not.toHaveProperty("src");
     expect(roots[0].children[0].children).toHaveLength(6);
-    expect(roots[1]).toMatchObject({ name: "span", style: { fontSize: "var(--text-xs)" }, children: [textNode("New")] });
+    expect(roots[1]).toMatchObject({ name: "span", style: { fontSize: "var(--text-xs)" }, children: [textRun("New")] });
   });
 
   it("throws the Babel error for a file it cannot parse", () => {
