@@ -21,11 +21,12 @@ export function fakeExtension(roots: IRNode[]) {
     },
     send(message) {
       received.push(structuredClone(message));
-      if (message.type !== "edit:apply") return;
+      if (message.type !== "edit:apply" && message.type !== "text:apply") return;
       const node = findNode(graph, message.nodeId);
       // A refused Edit gets no reply until the extension has an error message for it.
       if (!node?.editable) return;
-      Object.assign(node.style, message.style);
+      if (message.type === "edit:apply") Object.assign(node.style, message.style);
+      else node.text = message.text;
       reply({ type: "graph:patch", changedNodeIds: [node.id], nodes: [node] });
     },
   };
