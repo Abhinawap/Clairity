@@ -14,4 +14,4 @@ Flag any diff that recomputes one of these, or adds a new parser/transformer rul
 
 ## Actions take what the caller holds
 
-A data-layer action takes the values its UI caller already has: the selected Node's id, which a canvas click gives as an element or component id ([ADR 0001](docs/adr/0001-node-id-from-source-location.md): `data-ir-id` sits on JSX elements, never on text runs). The action resolves anything finer, such as an element's text Node, through one exported helper. Flag an action whose parameters a component could only get by searching the tree.
+A data-layer action takes values its UI caller already holds: the selected Node's id, which a canvas click gives as an element or component id ([ADR 0001](docs/adr/0001-node-id-from-source-location.md): `data-ir-id` sits on JSX elements, never on text runs), or an id one exported helper hands it, such as one of the selected Node's text runs. Flag an action whose parameters a component could only get by searching the tree.
