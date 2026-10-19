@@ -11,3 +11,7 @@ Every rule that two places must agree on lives in one exported function, and eac
 - **Static className reading**: `classNameAttr` / `classNameLiteral`.
 
 Flag any diff that recomputes one of these, or adds a new parser/transformer rule in one place only. That includes copying the logic into the Babel plugin instead of importing it.
+
+## Actions take what the caller holds
+
+A data-layer action takes values its UI caller already holds: the selected Node's id, which a canvas click gives as an element or component id ([ADR 0001](docs/adr/0001-node-id-from-source-location.md): `data-ir-id` sits on JSX elements, never on text runs), or an id one exported helper hands it, such as one of the selected Node's text runs. Flag an action whose parameters a component could only get by searching the tree.

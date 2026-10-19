@@ -6,6 +6,7 @@ import type { ProtocolMessage } from "../data/protocol";
 import { createSession, findNode, selectedNode, textRun } from "../data/session";
 
 const code = readFileSync(new URL("../../parser/test/fixtures/hero.tsx", import.meta.url), "utf8");
+// The hero's scene graph, written out: packages/parser/test/parse.test.ts.
 const roots = parseFile(code, "components/hero.tsx");
 const all = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...all(n.children)]);
 const byName = (name: string) => all(roots).find((n) => n.name === name)!;
