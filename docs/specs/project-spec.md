@@ -217,7 +217,7 @@ type IRNode = {
   };
   styleSource: "tailwind" | "inline" | "css-in-js" | "unknown";
   passthroughClasses?: string[];     // Tailwind tokens we don't model
-  text?: string;                     // for text nodes
+  text?: string;                     // for text runs
   children: IRNode[];
   source: { file: string; line: number; column: number; endLine: number; endColumn: number };
   editable: boolean;

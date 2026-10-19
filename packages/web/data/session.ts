@@ -21,7 +21,7 @@ export type SessionState = {
   applyEdit(nodeId: string, style: EditApplyMessage["style"]): void;
   // A text Edit on one text run (see textRuns): like applyEdit, it sends the run's id and changes nothing until the patch.
   // An id that is not a text run, a Read-only text run, or an id not in the scene graph sends nothing.
-  // An element's Read-only flag locks only its style, so its text runs stay editable.
+  // An element's Read-only flag covers only its style, so its text runs stay editable.
   applyText(runId: string, text: string): void;
 };
 

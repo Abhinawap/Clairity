@@ -79,7 +79,7 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 - Every text run is edited on its own. The inspector shows one field for each of the selected Node's own text runs, its direct children: the hero's `h1` shows "The website builder you're" and "looking for", the `a` shows "Start", and the `span` inside it shows "->". A canvas click selects the innermost element under the pointer, so the text the developer clicked is always one of the fields. When the layer tree selects a text run itself, the inspector edits that run.
 - One exported helper lists a Node's own text runs. The inspector reads it and the action takes one of its ids, so no component searches the tree.
 - A text Edit sends `text:apply` with the text run's id, so the message the extension receives does not change. An id that is not a text run, a text run the parser marked Read-only, or an id not in the scene graph sends nothing.
-- An element's Read-only flag locks its style, not its text runs: the hero's spread-props button keeps "Learn More" editable. A component usage's text runs are edited the same way, like the "Save" in `<Button>Save</Button>`.
+- An element's Read-only flag covers its style, not its text runs: the hero's spread-props button keeps "Learn More" editable. A component usage's text runs are edited the same way, like the "Save" in `<Button>Save</Button>`.
 
 **Rules for incoming messages**
 
