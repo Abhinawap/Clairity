@@ -19,6 +19,10 @@ jobs:
           runtime: node@22
       - run: pnpm -r --if-present run check-types
       - run: pnpm -r --if-present run lint
+      # GLOSSARY.md Avoid terms that are wrong in every context; context-dependent ones stay with review
+      - run: |
+          ! git grep -nIiE 'text[ _-]?nodes?\b|\block(s|ed)?\b|non-?editable|(unknown|unsupported) class|styling mode|text content|visual change' \
+            -- packages docs/specs ':!docs/specs/project-spec.md'
       - run: pnpm -r --if-present run test
       - run: pnpm -r --if-present run build
       # next build rewrites tracked files it disagrees with (tsconfig); fail instead of drifting
