@@ -18,5 +18,6 @@ jobs:
         with:
           runtime: node@22
       - run: pnpm -r --if-present run check-types
+      - run: pnpm -r --if-present run lint
       # xvfb: the extension's vscode-test (feat/scaffold-monorepo) needs a display
       - run: xvfb-run -a pnpm -r --if-present run test
