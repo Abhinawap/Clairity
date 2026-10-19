@@ -99,11 +99,11 @@ it("sends one text Edit for a text run, and shows the new text only once the ext
 });
 
 it("sends nothing for a text Edit on an id that is not a text run, a Read-only text run, or an id not in the scene graph", async () => {
-  // The parser marks no text run Read-only today, so this scene graph locks "Start" by hand.
-  const locked = structuredClone(roots);
-  const [start] = textRuns(findNode(locked, byName("a").id));
+  // The parser marks no text run Read-only today, so this scene graph marks "Start" Read-only by hand.
+  const readOnlyStart = structuredClone(roots);
+  const [start] = textRuns(findNode(readOnlyStart, byName("a").id));
   start.editable = false;
-  const fake = fakeExtension(locked);
+  const fake = fakeExtension(readOnlyStart);
   const session = createSession(fake.link);
   const before = session.getState();
   for (const id of [byName("h1").id, start.id, "components/hero.tsx:999:1:nope"]) session.getState().applyText(id, "Nothing");
