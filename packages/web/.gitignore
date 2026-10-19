@@ -1,8 +1,4 @@
-/node_modules
-/coverage
 /.next/
-/out/
-/build
 .DS_Store
 *.pem
 .env*

@@ -1,14 +1,4 @@
 {
   "name": "clairity",
-  "version": "1.0.0",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "12.8.1",
-      "onFail": "download"
-    }
-  },
-  "packageManager": "pnpm@12.8.1",
-  "type": "module"
+  "packageManager": "pnpm@12.8.1"
 }
