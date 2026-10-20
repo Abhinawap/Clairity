@@ -8,9 +8,10 @@ import { SessionProvider } from "../data/session-provider";
 const heroPath = join(process.cwd(), "../parser/test/fixtures/hero.tsx");
 
 export default function Home() {
+  const code = readFileSync(heroPath, "utf8");
   return (
-    <SessionProvider fixture={parseFile(readFileSync(heroPath, "utf8"), "components/hero.tsx")}>
-      <EditorShell />
+    <SessionProvider fixture={parseFile(code, "components/hero.tsx")}>
+      <EditorShell sources={{ "components/hero.tsx": code }} />
     </SessionProvider>
   );
 }
