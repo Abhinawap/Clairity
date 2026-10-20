@@ -4,3 +4,7 @@ dist/
 *.vsix
 .env
 .env.local
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

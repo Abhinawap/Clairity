@@ -10,10 +10,11 @@
     "build": "tsc"
   },
   "dependencies": {
-    "shared": "workspace:*",
     "@hono/node-server": "^2.1.5",
     "better-sqlite3": "^13.0.3",
+    "dotenv": "^18.0.8",
     "hono": "^4.13.13",
+    "shared": "workspace:*",
     "ws": "^8.22.0"
   },
   "devDependencies": {
