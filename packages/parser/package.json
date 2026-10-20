@@ -1,0 +1,22 @@
+{
+  "name": "parser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:demo": "DEMO_DIR=${DEMO_DIR:-../../../clairity-demo} vitest run test/demo.test.ts --silent=false",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.0.7"
+  },
+  "devDependencies": {
+    "@babel/types": "^8.0.6",
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

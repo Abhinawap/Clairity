@@ -1,0 +1,10 @@
+# Paths kept out of the public repo published at the hackathon deadline.
+# This repo stays private; the public copy is this history with these paths filtered out.
+#
+# At the deadline (needs `pip install git-filter-repo`):
+#   git clone https://github.com/Abhinawap/Clairity /tmp/clairity-public && cd /tmp/clairity-public
+#   git filter-repo --invert-paths --paths-from-file docs/agents/private-paths.txt
+#   gh repo create Abhinawap/clairity --public --source . --push
+#
+# One path per line. Blank lines and lines starting with # are ignored; prefix glob: or regex: for patterns.
+docs/specs/project-spec.md

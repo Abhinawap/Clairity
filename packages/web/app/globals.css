@@ -1,0 +1,34 @@
+@import "tailwindcss";
+/* The canvas preview renders the fixture's passthrough classes, so Tailwind must scan it. */
+@source "../../parser/test/fixtures";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Zero-specificity defaults so unstyled fixture tags look like a real page while any class or inline style wins. */
+:where([data-canvas-artboard] section) {
+  padding: 3.5rem 1.5rem;
+}
+:where([data-canvas-artboard] h1) {
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: #09090b;
+}
+:where([data-canvas-artboard] a[data-ir-id]),
+:where([data-canvas-artboard] button[data-ir-id]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1.25rem;
+  margin-right: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+}
+:where([data-canvas-artboard] a[data-ir-id]) {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+:where([data-canvas-artboard] button[data-ir-id]) {
+  background-color: #f4f4f5;
+  color: #18181b;
+  border: 1px solid #e4e4e7;
+}

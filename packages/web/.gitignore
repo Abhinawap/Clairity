@@ -1,0 +1,6 @@
+/.next/
+.DS_Store
+*.pem
+.env*
+*.tsbuildinfo
+next-env.d.ts
