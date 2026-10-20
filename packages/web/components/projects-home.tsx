@@ -232,6 +232,12 @@ export function ProjectsHome() {
         </Dialog.Root>
 
         <ThemeToggle />
+        <Link
+          href="/login"
+          className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-blue-500 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          Sign out
+        </Link>
       </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
