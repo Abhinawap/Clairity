@@ -1,1 +1,4 @@
 @import "tailwindcss";
+/* The canvas preview renders the fixture's passthrough classes, so Tailwind must scan it. */
+@source "../../parser/test/fixtures";
+@custom-variant dark (&:where(.dark, .dark *));
