@@ -4,8 +4,6 @@ import type { IRNode } from "shared";
 
 const filePath = process.argv[2];
 
-// Parse the file to build a nodeId -> position lookup, same as a real
-// caller (the backend) would do using the cached scene graph.
 function buildLookup(nodes: IRNode[], map = new Map<string, { line: number; column: number }>()) {
   for (const n of nodes) {
     map.set(n.id, { line: n.source.line, column: n.source.column });

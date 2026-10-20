@@ -19,7 +19,7 @@ function getAttrValue(attr: t.JSXAttribute): string | number | boolean {
     if (t.isStringLiteral(expr)) return expr.value;
     if (t.isNumericLiteral(expr)) return expr.value;
     if (t.isBooleanLiteral(expr)) return expr.value;
-    return "[expression]"; // can't statically resolve — flagged below
+    return "[expression]";
   }
   return "[unknown]";
 }
