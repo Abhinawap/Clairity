@@ -17,6 +17,7 @@
     "@babel/parser": "^8.0.7",
     "@babel/traverse": "^8.0.7",
     "@babel/types": "^8.0.6",
+    "recast": "^0.24.0",
     "shared": "workspace:*",
     "ws": "^8.22.0"
   },
