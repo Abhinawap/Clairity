@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { attachSessionBroker, generateSessionId } from "./sessionBroker";
+import { createSessionRecord } from "./sessionStore";
 
 const app = new Hono();
 
@@ -8,6 +9,7 @@ app.get("/", (c) => c.text("clairity server running"));
 
 app.post("/sessions", (c) => {
   const sessionId = generateSessionId();
+  createSessionRecord(sessionId);
   return c.json({ sessionId, wsUrl: `ws://localhost:8787` });
 });
 
