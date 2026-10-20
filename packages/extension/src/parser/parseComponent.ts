@@ -1,3 +1,5 @@
+import { resolveStyles } from "./styleResolver";
+
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { parse } from "@babel/parser";
@@ -57,20 +59,29 @@ function convertElement(node: t.JSXElement, file: string): IRNode {
   }
 
   const children: IRNode[] = [];
-  let text: string | undefined;
+  const textParts: string[] = [];
 
   for (const child of node.children) {
     if (t.isJSXElement(child)) {
       children.push(convertElement(child, file));
     } else if (t.isJSXText(child)) {
-      const trimmed = child.value.trim();
-      if (trimmed) text = trimmed;
+      const trimmed = child.value.replace(/\s+/g, " ").trim();
+      if (trimmed) textParts.push(trimmed);
     } else if (t.isJSXExpressionContainer(child)) {
-      // conditional/mapped content — not statically resolvable in MVP
-      editable = false;
-      reason = reason ?? "contains dynamic JSX expression";
+      const expr = child.expression;
+
+      if (t.isStringLiteral(expr)) {
+        if (expr.value.trim()) textParts.push(expr.value);
+        } else if (t.isNumericLiteral(expr)) {
+          textParts.push(String(expr.value));
+        } else if (!t.isJSXEmptyExpression(expr)) {
+          editable = false;
+          reason = reason ?? "has dynamic JSX content";
+      }
     }
   }
+
+  const text = textParts.length > 0 ? textParts.join(" ") : undefined;
 
   return {
     id: makeId(file, line, column, name),
@@ -112,5 +123,5 @@ export function parseComponent(filePath: string): IRNode[] {
     },
   });
 
-  return roots;
+  return roots.map(resolveStyles);
 }
