@@ -24,7 +24,7 @@ jobs:
       - run: |
           ! git grep -nIiE '\blocked[ _-]?(node|text)|\bnon[ _-]?editable|\b(unknown|unsupported)[ _-]?class|\bstyling[ _-]?mode|\btext[ -]content' \
             -- packages docs/specs ':!docs/specs/project-spec.md'
-      - run: pnpm -r --if-present run test
+      - run: xvfb-run -a pnpm -r --if-present run test
       - run: pnpm -r --if-present run build
       # next build rewrites tracked files it disagrees with (tsconfig); fail instead of drifting
       - run: git diff --exit-code
