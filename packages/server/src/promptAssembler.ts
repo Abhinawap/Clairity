@@ -71,7 +71,7 @@ Never change props or children you were not shown.`;
     throw new Error(`Token Factory request failed: ${res.status} ${await res.text()}`);
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   const content = data.choices?.[0]?.message?.content;
   if (!content) {
     throw new Error("Token Factory returned no content");
