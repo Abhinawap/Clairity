@@ -7,6 +7,9 @@ import type { EditApplyMessage, IntentRequestMessage, ProtocolMessage } from "./
 export type ExtensionLink = {
   open(onMessage: (message: ProtocolMessage) => void, onConnection: (connection: Connection) => void): void;
   send(message: ProtocolMessage): void;
+  // Optional: nothing to close for the fake. The real link closes its socket, so a reload or a
+  // React Strict Mode dev remount doesn't leave an orphaned connection behind.
+  close?(): void;
 };
 
 export type Connection = "connecting" | "connected";

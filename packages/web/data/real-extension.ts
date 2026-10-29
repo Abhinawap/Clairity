@@ -30,6 +30,9 @@ export function realExtension(sessionId: string): { link: ExtensionLink } {
     send(message) {
       if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
     },
+    close() {
+      socket?.close();
+    },
   };
 
   return { link };

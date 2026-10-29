@@ -58,9 +58,16 @@ function applyNodeChange(nodeId: string, buildChanges: (node: IRNode) => (Change
   watcher?.reparseNow(found.file);
 }
 
-function handleIncomingMessage(message: unknown, output: vscode.OutputChannel): void {
+function handleIncomingMessage(message: unknown, workspaceRoot: string, output: vscode.OutputChannel): void {
   if (!message || typeof message !== "object" || !("type" in message)) return;
   const msg = message as { type: string } & Record<string, unknown>;
+
+  // Synthesized by the broker, not relayed from the web app (see sessionBroker.ts): a web client
+  // connected (or reconnected) after the one-time graph:full was already sent and missed it.
+  if (msg.type === "peer:joined" && msg.role === "web") {
+    sendInitialGraph(workspaceRoot, output);
+    return;
+  }
 
   if (msg.type === "edit:apply" && typeof msg.nodeId === "string" && msg.style && typeof msg.style === "object") {
     const nodeId = msg.nodeId;
@@ -103,7 +110,7 @@ export function activate(context: vscode.ExtensionContext) {
   sessionManager = new SessionManager(workspaceRoot);
   sessionManager.start(
     () => sendInitialGraph(workspaceRoot, output),
-    (message) => handleIncomingMessage(message, output)
+    (message) => handleIncomingMessage(message, workspaceRoot, output)
   );
 
   watcher = new SceneGraphWatcher((patch) => {
