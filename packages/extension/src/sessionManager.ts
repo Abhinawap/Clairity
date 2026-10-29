@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import WebSocket from "ws";
 
 const DEV_SERVER_URL_PATTERN = /https?:\/\/localhost:\d+/;
-const BACKEND_WS_URL = "ws://localhost:8787"; // placeholder until packages/server exists
+const BACKEND_WS_BASE_URL = "ws://localhost:8787";
 
 export class SessionManager {
   readonly sessionId: string;
@@ -56,10 +56,12 @@ export class SessionManager {
   }
 
   private connectToBackend(): void {
-    this.socket = new WebSocket(BACKEND_WS_URL);
+    // The broker pairs this socket with the web app's socket by sessionId; both must send role too.
+    const url = `${BACKEND_WS_BASE_URL}?sessionId=${this.sessionId}&role=extension`;
+    this.socket = new WebSocket(url);
 
     this.socket.on("open", () => {
-      this.output.appendLine(`[clairity] connected to backend at ${BACKEND_WS_URL}`);
+      this.output.appendLine(`[clairity] connected to backend at ${url}`);
       this.socket?.send(
         JSON.stringify({
           type: "session:ready",
