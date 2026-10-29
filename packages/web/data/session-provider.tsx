@@ -1,6 +1,6 @@
 "use client";
 import type { IRNode } from "parser";
-import { createContext, type ReactNode, use, useState } from "react";
+import { createContext, type ReactNode, use, useEffect, useState } from "react";
 import { useStore } from "zustand";
 import { fakeExtension } from "./fake-extension";
 import { realExtension } from "./real-extension";
@@ -10,8 +10,14 @@ const SessionContext = createContext<ReturnType<typeof createSession> | null>(nu
 
 // Creates the session for every component under it. Fake or real is chosen here: a sessionId in the
 // URL means a real extension is out there to pair with over the broker; without one, the fake runs.
+// The link is kept alongside the session (not just inside it) so it can be closed on unmount — a
+// reload or a React Strict Mode dev remount would otherwise leave an orphaned open WebSocket behind.
 export function SessionProvider({ sessionId, fixture, children }: { sessionId?: string; fixture: IRNode[]; children: ReactNode }) {
-  const [session] = useState(() => createSession(sessionId ? realExtension(sessionId).link : fakeExtension(fixture).link));
+  const [{ session, link }] = useState(() => {
+    const link = sessionId ? realExtension(sessionId).link : fakeExtension(fixture).link;
+    return { session: createSession(link), link };
+  });
+  useEffect(() => () => link.close?.(), [link]);
   return <SessionContext value={session}>{children}</SessionContext>;
 }
 
