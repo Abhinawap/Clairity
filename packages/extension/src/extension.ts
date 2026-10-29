@@ -50,6 +50,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   watcher = new SceneGraphWatcher((patch) => {
     output.appendLine(`[clairity] patch ready for ${patch.file} (${patch.changedNodeIds.length} ids)`);
+    if (patch.changedNodeIds.length === 0) return;
+    sessionManager?.send({ type: "graph:patch", changedNodeIds: patch.changedNodeIds, nodes: patch.nodes });
   }, output);
   watcher.start();
 

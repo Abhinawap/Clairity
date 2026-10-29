@@ -10,12 +10,19 @@ export type GraphPatch = {
 
 type PatchHandler = (patch: GraphPatch) => void;
 
-function flattenIds(nodes: IRNode[], out: Set<string> = new Set()): Set<string> {
+function flattenById(nodes: IRNode[], out: Map<string, IRNode> = new Map()): Map<string, IRNode> {
   for (const n of nodes) {
-    out.add(n.id);
-    flattenIds(n.children, out);
+    out.set(n.id, n);
+    flattenById(n.children, out);
   }
   return out;
+}
+
+// Ids are location-based (see nodeId), so an edit that keeps a node's line/column/name keeps its id too.
+// Compare content, not just id presence, or an in-place text/style edit would never be reported as changed.
+function nodeContentKey(node: IRNode): string {
+  const { children: _children, ...rest } = node;
+  return JSON.stringify(rest);
 }
 
 export class SceneGraphWatcher {
@@ -64,15 +71,23 @@ export class SceneGraphWatcher {
       return;
     }
 
-    const previousIds = flattenIds(this.cache.get(filePath) ?? []);
-    const newIds = flattenIds(nodes);
-    const changedNodeIds = [...newIds].filter((id) => !previousIds.has(id));
+    const previous = flattenById(this.cache.get(filePath) ?? []);
+    const current = flattenById(nodes);
+    const changedNodeIds: string[] = [];
+    const changedNodes: IRNode[] = [];
+    for (const [id, node] of current) {
+      const prev = previous.get(id);
+      if (!prev || nodeContentKey(prev) !== nodeContentKey(node)) {
+        changedNodeIds.push(id);
+        changedNodes.push(node);
+      }
+    }
 
     this.cache.set(filePath, nodes);
     this.output.appendLine(
       `[clairity] re-parsed ${filePath}: ${nodes.length} root node(s), ${changedNodeIds.length} new/changed id(s)`
     );
-    this.onPatch({ file: filePath, nodes, changedNodeIds });
+    this.onPatch({ file: filePath, nodes: changedNodes, changedNodeIds });
   }
 
   dispose(): void {
