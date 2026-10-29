@@ -3,13 +3,15 @@ import type { IRNode } from "parser";
 import { createContext, type ReactNode, use, useState } from "react";
 import { useStore } from "zustand";
 import { fakeExtension } from "./fake-extension";
+import { realExtension } from "./real-extension";
 import { createSession, type SessionState } from "./session";
 
 const SessionContext = createContext<ReturnType<typeof createSession> | null>(null);
 
-// Creates the session for every component under it. Fake or real is chosen here: until the broker connection exists, only the fake runs.
-export function SessionProvider({ fixture, children }: { fixture: IRNode[]; children: ReactNode }) {
-  const [session] = useState(() => createSession(fakeExtension(fixture).link));
+// Creates the session for every component under it. Fake or real is chosen here: a sessionId in the
+// URL means a real extension is out there to pair with over the broker; without one, the fake runs.
+export function SessionProvider({ sessionId, fixture, children }: { sessionId?: string; fixture: IRNode[]; children: ReactNode }) {
+  const [session] = useState(() => createSession(sessionId ? realExtension(sessionId).link : fakeExtension(fixture).link));
   return <SessionContext value={session}>{children}</SessionContext>;
 }
 
