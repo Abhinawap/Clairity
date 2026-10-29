@@ -177,6 +177,9 @@ importers:
       '@babel/types':
         specifier: ^8.0.6
         version: 8.0.6
+      parser:
+        specifier: workspace:*
+        version: link:../parser
       recast:
         specifier: ^0.24.0
         version: 0.24.0
