@@ -51,6 +51,25 @@ export class SceneGraphWatcher {
     this.cache.set(filePath, nodes);
   }
 
+  // Scans every watched file's cached tree for a node id. Used to resolve edit:apply/text:apply,
+  // which only carry a nodeId, into the file + location diffApplier needs.
+  findNode(nodeId: string): { file: string; node: IRNode } | undefined {
+    for (const [file, nodes] of this.cache) {
+      const node = flattenById(nodes).get(nodeId);
+      if (node) return { file, node };
+    }
+    return undefined;
+  }
+
+  // Re-parses and diffs immediately, bypassing the debounce. Call after writing a file yourself
+  // (e.g. from diffApplier) once suppressNextChange has been set, so the resulting patch goes out
+  // right away instead of waiting on the filesystem watcher's own (suppressed) change event.
+  reparseNow(filePath: string): void {
+    const pending = this.debounceTimers.get(filePath);
+    if (pending) clearTimeout(pending);
+    this.reparse(filePath);
+  }
+
   private handleChange(filePath: string): void {
     if (this.suppressed.has(filePath)) {
       this.suppressed.delete(filePath);

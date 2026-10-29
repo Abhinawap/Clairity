@@ -1,9 +1,11 @@
 import * as vscode from "vscode";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import type { Change, IRNode } from "shared";
 import { SessionManager } from "./sessionManager";
 import { SceneGraphWatcher } from "./watcher";
 import { parseComponent } from "./parser/parseComponent";
+import { applyChanges } from "./parser/diffApplier";
 
 let sessionManager: SessionManager | undefined;
 let watcher: SceneGraphWatcher | undefined;
@@ -33,6 +35,59 @@ function sendInitialGraph(workspaceRoot: string, output: vscode.OutputChannel): 
   }
 }
 
+// A changed node always patches back out through the normal watcher -> graph:patch path (step 3's
+// wiring), so a successful apply here doesn't send anything itself — it just writes the file and
+// re-parses. suppressNextChange keeps the filesystem watcher's own event for this write from also
+// firing a (redundant) reparse.
+function applyNodeChange(nodeId: string, buildChanges: (node: IRNode) => (Change & { id: string })[], output: vscode.OutputChannel): void {
+  const found = watcher?.findNode(nodeId);
+  if (!found) {
+    output.appendLine(`[clairity] edit for unknown nodeId ${nodeId}; dropped`);
+    return;
+  }
+  const changes = buildChanges(found.node);
+  if (changes.length === 0) return;
+
+  const nodeLookup = new Map([[nodeId, { line: found.node.source.line, column: found.node.source.column }]]);
+  watcher?.suppressNextChange(found.file);
+  const result = applyChanges(found.file, nodeLookup, changes);
+  if (!result.ok) {
+    output.appendLine(`[clairity] edit:apply failed for ${nodeId}: ${result.error}`);
+    return;
+  }
+  watcher?.reparseNow(found.file);
+}
+
+function handleIncomingMessage(message: unknown, output: vscode.OutputChannel): void {
+  if (!message || typeof message !== "object" || !("type" in message)) return;
+  const msg = message as { type: string } & Record<string, unknown>;
+
+  if (msg.type === "edit:apply" && typeof msg.nodeId === "string" && msg.style && typeof msg.style === "object") {
+    const nodeId = msg.nodeId;
+    const style = msg.style as Record<string, string>;
+    applyNodeChange(
+      nodeId,
+      (node) =>
+        Object.entries(style).map(([property, after], i) => ({
+          id: `c_${i}`,
+          kind: "style" as const,
+          nodeId,
+          property,
+          before: (node.style as Record<string, string | undefined>)[property],
+          after,
+        })),
+      output
+    );
+    return;
+  }
+
+  if (msg.type === "text:apply" && typeof msg.nodeId === "string" && typeof msg.text === "string") {
+    const nodeId = msg.nodeId;
+    const text = msg.text;
+    applyNodeChange(nodeId, (node) => [{ id: "c_text", kind: "text" as const, nodeId, before: node.text, after: text }], output);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
   vscode.window.showInformationMessage("Clairity: activate() ran!");
 
@@ -46,7 +101,10 @@ export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel("Clairity");
 
   sessionManager = new SessionManager(workspaceRoot);
-  sessionManager.start(() => sendInitialGraph(workspaceRoot, output));
+  sessionManager.start(
+    () => sendInitialGraph(workspaceRoot, output),
+    (message) => handleIncomingMessage(message, output)
+  );
 
   watcher = new SceneGraphWatcher((patch) => {
     output.appendLine(`[clairity] patch ready for ${patch.file} (${patch.changedNodeIds.length} ids)`);

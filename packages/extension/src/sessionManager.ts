@@ -18,11 +18,14 @@ export class SessionManager {
     this.output = vscode.window.createOutputChannel("Clairity");
   }
 
-  /** onReady fires once the backend socket is open and session:ready has been sent. */
-  async start(onReady?: () => void): Promise<void> {
+  /**
+   * onReady fires once the backend socket is open and session:ready has been sent.
+   * onMessage fires for every protocol message relayed from the web app (via the broker).
+   */
+  async start(onReady?: () => void, onMessage?: (message: unknown) => void): Promise<void> {
     this.output.appendLine(`[clairity] session ${this.sessionId} starting in ${this.workspaceRoot}`);
     await this.startDevServer();
-    this.connectToBackend(onReady);
+    this.connectToBackend(onReady, onMessage);
   }
 
   private startDevServer(): Promise<void> {
@@ -56,7 +59,7 @@ export class SessionManager {
     });
   }
 
-  private connectToBackend(onReady?: () => void): void {
+  private connectToBackend(onReady?: () => void, onMessage?: (message: unknown) => void): void {
     // The broker pairs this socket with the web app's socket by sessionId; both must send role too.
     const url = `${BACKEND_WS_BASE_URL}?sessionId=${this.sessionId}&role=extension`;
     this.socket = new WebSocket(url);
@@ -71,6 +74,14 @@ export class SessionManager {
         })
       );
       onReady?.();
+    });
+
+    this.socket.on("message", (data) => {
+      try {
+        onMessage?.(JSON.parse(data.toString()));
+      } catch (err) {
+        this.output.appendLine(`[clairity] failed to parse incoming message: ${(err as Error).message}`);
+      }
     });
 
     this.socket.on("error", (err: Error) => {
