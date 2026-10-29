@@ -18,10 +18,11 @@ export class SessionManager {
     this.output = vscode.window.createOutputChannel("Clairity");
   }
 
-  async start(): Promise<void> {
+  /** onReady fires once the backend socket is open and session:ready has been sent. */
+  async start(onReady?: () => void): Promise<void> {
     this.output.appendLine(`[clairity] session ${this.sessionId} starting in ${this.workspaceRoot}`);
     await this.startDevServer();
-    this.connectToBackend();
+    this.connectToBackend(onReady);
   }
 
   private startDevServer(): Promise<void> {
@@ -55,7 +56,7 @@ export class SessionManager {
     });
   }
 
-  private connectToBackend(): void {
+  private connectToBackend(onReady?: () => void): void {
     // The broker pairs this socket with the web app's socket by sessionId; both must send role too.
     const url = `${BACKEND_WS_BASE_URL}?sessionId=${this.sessionId}&role=extension`;
     this.socket = new WebSocket(url);
@@ -69,6 +70,7 @@ export class SessionManager {
           devServerUrl: this.devServerUrl,
         })
       );
+      onReady?.();
     });
 
     this.socket.on("error", (err: Error) => {
@@ -78,6 +80,15 @@ export class SessionManager {
     this.socket.on("close", () => {
       this.output.appendLine("[clairity] backend connection closed");
     });
+  }
+
+  /** Sends a protocol message to the backend if the socket is open; logs and drops it otherwise. */
+  send(message: unknown): void {
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message));
+    } else {
+      this.output.appendLine(`[clairity] dropped message, socket not open: ${JSON.stringify(message)}`);
+    }
   }
 
   dispose(): void {
