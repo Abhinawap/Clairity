@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, relative, sep } from "node:path";
+import { parseFile } from "parser";
 import type { Change, IRNode } from "shared";
 import { SessionManager } from "./sessionManager";
 import { SceneGraphWatcher } from "./watcher";
-import { parseComponent } from "./parser/parseComponent";
 import { applyChanges } from "./parser/diffApplier";
 
 let sessionManager: SessionManager | undefined;
@@ -17,6 +17,11 @@ function findEntryFile(workspaceRoot: string): string | undefined {
   return ENTRY_CANDIDATES.map((rel) => join(workspaceRoot, rel)).find((full) => existsSync(full));
 }
 
+// ADR 0001: node ids hash the project-relative POSIX path, never the absolute workspace path.
+function toProjectRelativePosix(workspaceRoot: string, filePath: string): string {
+  return relative(workspaceRoot, filePath).split(sep).join("/");
+}
+
 // Parses the entry route and sends graph:full so the web app has something to render on connect.
 // The watcher's cache is primed with the same parse so the next file-change patch diffs against it.
 function sendInitialGraph(workspaceRoot: string, output: vscode.OutputChannel): void {
@@ -26,7 +31,8 @@ function sendInitialGraph(workspaceRoot: string, output: vscode.OutputChannel): 
     return;
   }
   try {
-    const nodes = parseComponent(entryFile);
+    const code = readFileSync(entryFile, "utf-8");
+    const nodes = parseFile(code, toProjectRelativePosix(workspaceRoot, entryFile));
     watcher?.primeCache(entryFile, nodes);
     sessionManager?.send({ type: "graph:full", nodes });
     output.appendLine(`[clairity] sent graph:full for ${entryFile} (${nodes.length} root node(s))`);
@@ -113,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
     (message) => handleIncomingMessage(message, workspaceRoot, output)
   );
 
-  watcher = new SceneGraphWatcher((patch) => {
+  watcher = new SceneGraphWatcher(workspaceRoot, (patch) => {
     output.appendLine(`[clairity] patch ready for ${patch.file} (${patch.changedNodeIds.length} ids)`);
     if (patch.changedNodeIds.length === 0) return;
     sessionManager?.send({ type: "graph:patch", changedNodeIds: patch.changedNodeIds, nodes: patch.nodes });

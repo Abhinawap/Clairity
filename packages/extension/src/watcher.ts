@@ -1,6 +1,15 @@
 import * as vscode from "vscode";
-import { parseComponent } from "./parser/parseComponent";
+import { readFileSync } from "node:fs";
+import { relative, sep } from "node:path";
+import { parseFile } from "parser";
 import type { IRNode } from "shared";
+
+// ADR 0001: node ids hash "<project-relative POSIX path>:<name>:<line>:<column>". parseFile's id
+// must match what the (future) data-ir-id Babel plugin computes from the same source, so this must
+// always be relative to the project root, forward slashes, never the absolute workspace path.
+function toProjectRelativePosix(workspaceRoot: string, filePath: string): string {
+  return relative(workspaceRoot, filePath).split(sep).join("/");
+}
 
 export type GraphPatch = {
   file: string;
@@ -32,6 +41,7 @@ export class SceneGraphWatcher {
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
+    private readonly workspaceRoot: string,
     private readonly onPatch: PatchHandler,
     private readonly output: vscode.OutputChannel
   ) {}
@@ -84,7 +94,8 @@ export class SceneGraphWatcher {
     this.debounceTimers.delete(filePath);
     let nodes: IRNode[];
     try {
-      nodes = parseComponent(filePath);
+      const code = readFileSync(filePath, "utf-8");
+      nodes = parseFile(code, toProjectRelativePosix(this.workspaceRoot, filePath));
     } catch (err) {
       this.output.appendLine(`[clairity] re-parse failed for ${filePath}: ${(err as Error).message}`);
       return;
