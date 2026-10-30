@@ -39,3 +39,11 @@ _Avoid_: suggestion, AI result
 **Change**:
 One item in a Proposal, which the developer accepts or rejects on its own.
 _Avoid_: edit, diff
+
+**Scope**:
+What a request to the model covers: the selected Node or the whole page. Either scope is answered with one Proposal.
+_Avoid_: mode, agent mode
+
+**Build-fix loop**:
+A cycle in which the model's Changes are applied, the project is built, and any build errors go back to the model to fix, until the build passes.
+_Avoid_: agent loop, review loop
