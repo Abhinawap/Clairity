@@ -56,26 +56,28 @@ export function AiPanel() {
     });
 
   return (
-    <section aria-label="AI panel" className=" flex max-h-[52%] shrink-0 flex-col border-t border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-900/40">
-      <div className="flex items-center gap-1.5 border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-        <Sparkles className="size-3.5 text-blue-500" aria-hidden />
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-300">AI &amp; Agent</h2>
-        <span className="ml-auto rounded bg-zinc-200/70 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+    <section aria-label="AI panel" className="flex max-h-[52%] shrink-0 flex-col border-t border-[#DAF5EE] bg-[#F2FBF9]/60 text-[#172A3A] dark:border-[#004346]/70 dark:bg-[#080C0E] dark:text-[#F2FBF9] transition-colors">
+      <div className="flex items-center gap-1.5 border-b border-[#DAF5EE] px-3 py-2 bg-white dark:border-[#004346]/70 dark:bg-[#080C0E] transition-colors">
+        <Sparkles className="size-3.5 text-[#09BC8A]" aria-hidden />
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-[#004346] dark:text-[#DAF5EE]">AI &amp; Agent</h2>
+        <span className="ml-auto rounded bg-[#DAF5EE] px-1.5 py-0.5 font-mono text-[10px] text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">
           nemotron-3-super
         </span>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2.5 overflow-auto p-3">
         <div className="flex items-center gap-1.5">
-          <div className="grid flex-1 grid-cols-2 rounded-md bg-zinc-200/70 p-0.5 text-[11px] dark:bg-zinc-800" role="group" aria-label="AI scope">
+          <div className="grid flex-1 grid-cols-2 rounded-md bg-[#DAF5EE]/60 p-0.5 text-[11px] dark:bg-[#172A3A] dark:border dark:border-[#004346]/60 transition-colors" role="group" aria-label="AI scope">
             {(["node", "page"] as const).map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setScope(s)}
                 aria-pressed={scope === s}
-                className={`cursor-pointer rounded px-2 py-0.5 font-medium ${
-                  scope === s ? "bg-white text-zinc-900 shadow-xs dark:bg-zinc-950 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"
+                className={`cursor-pointer rounded px-2 py-0.5 font-medium transition-colors ${
+                  scope === s
+                    ? "bg-white text-[#172A3A] shadow-xs dark:bg-[#004346] dark:text-[#F2FBF9]"
+                    : "text-[#004346]/70 dark:text-[#DAF5EE]/70"
                 }`}
               >
                 {s === "node" ? `Node (${selected?.name ?? "root"})` : "Whole Page"}
@@ -94,7 +96,7 @@ export function AiPanel() {
                 setPrompt(preset.prompt);
                 submit(preset.prompt, preset.scope);
               }}
-              className="cursor-pointer rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] text-zinc-600 hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+              className="cursor-pointer rounded-full border border-[#DAF5EE] bg-white px-2 py-0.5 text-[11px] text-[#004346] hover:border-[#09BC8A] hover:text-[#09BC8A] dark:border-[#004346] dark:bg-[#172A3A] dark:text-[#DAF5EE] transition-colors"
             >
               {preset.label}
             </button>
@@ -115,19 +117,19 @@ export function AiPanel() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Describe a visual or responsive change…"
-            className="h-7 min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-2 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+            className="h-7 min-w-0 flex-1 rounded-md border border-[#DAF5EE] bg-white px-2 text-xs text-[#172A3A] placeholder:text-[#004346]/40 focus:border-[#09BC8A] focus:outline-none dark:border-[#004346] dark:bg-[#172A3A] dark:text-[#F2FBF9] dark:placeholder:text-[#DAF5EE]/40 transition-colors"
           />
           <button
             type="submit"
             aria-label="Send prompt"
-            className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-md bg-blue-600 px-2.5 text-xs font-medium text-white hover:bg-blue-500"
+            className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-md bg-[#09BC8A] px-2.5 text-xs font-semibold text-white shadow-xs hover:bg-[#09BC8A]/90 focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#080C0E] transition-colors"
           >
             <Send className="size-3" aria-hidden />
           </button>
         </form>
 
         {streaming && (
-          <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50/60 p-2 font-mono text-[11px] text-blue-800 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-200">
+          <div className="flex items-center gap-2 rounded-md border border-[#09BC8A]/40 bg-[#DAF5EE]/60 p-2 font-mono text-[11px] text-[#004346] dark:border-[#09BC8A]/40 dark:bg-[#004346]/40 dark:text-[#DAF5EE] transition-colors">
             <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
             <span className="truncate">{streaming}</span>
           </div>
@@ -140,8 +142,8 @@ export function AiPanel() {
         )}
 
         {proposal && (
-          <div className="space-y-2 rounded-md border border-zinc-200 bg-white p-2.5 text-xs dark:border-zinc-800 dark:bg-zinc-950" aria-label="Proposed Changes">
-            <p className="text-[11px] text-zinc-600 dark:text-zinc-300">{proposal.reasoning}</p>
+          <div className="space-y-2 rounded-md border border-[#DAF5EE] bg-white p-2.5 text-xs shadow-md dark:border-[#004346] dark:bg-[#172A3A]/80 transition-colors" aria-label="Proposed Changes">
+            <p className="text-[11px] text-[#004346]/80 dark:text-[#DAF5EE]/80">{proposal.reasoning}</p>
             {lastError && (
               <p role="alert" className="flex items-start gap-1.5 rounded bg-red-50 px-1.5 py-1 text-[11px] text-red-700 dark:bg-red-950 dark:text-red-300">
                 <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden /> {lastError}
@@ -152,17 +154,17 @@ export function AiPanel() {
                 const checked = accepted.has(c.id);
                 return (
                   <li key={c.id}>
-                    <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                    <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 hover:bg-[#F2FBF9] dark:hover:bg-[#004346]/40 transition-colors">
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggleChange(c.id)}
-                        className="size-3.5 rounded border-zinc-300 text-blue-600"
+                        className="size-3.5 rounded border-[#DAF5EE] text-[#09BC8A] focus:ring-[#09BC8A] dark:border-[#004346]"
                       />
-                      <span className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-[10px] uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                      <span className="rounded bg-[#DAF5EE] px-1 py-0.5 font-mono text-[10px] uppercase font-semibold text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">
                         {c.kind}
                       </span>
-                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-zinc-800 dark:text-zinc-200">
+                      <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-[#172A3A] dark:text-[#F2FBF9]">
                         {describeChange(c)}
                       </span>
                     </label>
@@ -174,7 +176,7 @@ export function AiPanel() {
               <button
                 type="button"
                 onClick={() => applyProposal(proposal.changes.map((c) => c.id))}
-                className="inline-flex cursor-pointer items-center gap-1 rounded bg-blue-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-blue-500"
+                className="inline-flex cursor-pointer items-center gap-1 rounded bg-[#09BC8A] px-2 py-1 text-[11px] font-semibold text-white shadow-xs hover:bg-[#09BC8A]/90 focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#080C0E] transition-colors"
               >
                 <Check className="size-3" aria-hidden /> Accept All
               </button>
@@ -182,14 +184,14 @@ export function AiPanel() {
                 type="button"
                 disabled={accepted.size === 0}
                 onClick={() => applyProposal([...accepted])}
-                className="inline-flex cursor-pointer items-center gap-1 rounded border border-zinc-200 px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="inline-flex cursor-pointer items-center gap-1 rounded border border-[#DAF5EE] px-2 py-1 text-[11px] font-medium text-[#004346] hover:bg-[#DAF5EE] disabled:opacity-40 dark:border-[#004346] dark:text-[#DAF5EE] dark:hover:bg-[#004346] transition-colors"
               >
                 Apply ({accepted.size})
               </button>
               <button
                 type="button"
                 onClick={() => applyProposal([])}
-                className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] text-[#004346]/70 hover:bg-[#DAF5EE] dark:text-[#DAF5EE]/60 dark:hover:bg-[#004346] dark:hover:text-[#F2FBF9] transition-colors"
               >
                 <X className="size-3" aria-hidden /> Reject
               </button>
