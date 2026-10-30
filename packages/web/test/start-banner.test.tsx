@@ -6,7 +6,7 @@ describe("StartBanner", () => {
   it("renders as a link by default with target URL and label", () => {
     const html = renderToStaticMarkup(<StartBanner href="/editor" />);
     expect(html).toContain('href="/editor"');
-    expect(html).toContain("START NOW");
+    expect(html).toContain("stArt now");
     expect(html).toContain("&gt;");
     expect(html).toContain("font-dirtyline");
     expect(html).toContain("circuit-pattern.png");

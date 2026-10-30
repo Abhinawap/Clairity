@@ -5,8 +5,8 @@ import { InsideCodebaseSection, InsideCodebase, EditorSnippetGraphic } from "../
 describe("InsideCodebaseSection", () => {
   it("renders the headline in Dirtyline font", () => {
     const html = renderToStaticMarkup(<InsideCodebaseSection />);
-    expect(html).toContain("RIGHT INSIDE YOUR");
-    expect(html).toContain("CODEBASE.");
+    expect(html).toContain("RigHt inside your");
+    expect(html).toContain("codebase.");
     expect(html).toContain("font-dirtyline");
   });
 
@@ -20,7 +20,7 @@ describe("InsideCodebaseSection", () => {
 
   it("renders the GET THE EXTENSION button in Dirtyline font with brutalist shadow", () => {
     const html = renderToStaticMarkup(<InsideCodebaseSection />);
-    expect(html).toContain("GET THE EXTENSION");
+    expect(html).toContain("get the extension");
     expect(html).toContain("bg-[#DAF5EE]");
     expect(html).toContain("text-[#004346]");
     expect(html).toContain("box-shadow:-4px 10px 0px #080C0E");
