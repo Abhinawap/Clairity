@@ -5,7 +5,7 @@ import { DesignReviewShip, WorkflowSection } from "../components/design-review-s
 describe("DesignReviewShip", () => {
   it("renders default headline and subheadline with proper typography classes", () => {
     const html = renderToStaticMarkup(<DesignReviewShip />);
-    expect(html).toContain("DESIGN, REVIEW, &amp; SHIP");
+    expect(html).toContain("dEsIgn, Review, &amp; ship");
     expect(html).toContain("font-dirtyline");
     expect(html).toContain("var(--font-dirtyline)");
     expect(html).toContain("Clarity turns your design intent into real code changes");
