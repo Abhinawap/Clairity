@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { spawn, ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { basename } from "node:path";
 import WebSocket from "ws";
 
 const DEV_SERVER_URL_PATTERN = /https?:\/\/localhost:\d+/;
@@ -38,6 +39,7 @@ export class SessionManager {
   get editorUrl(): string {
     const url = new URL("/editor", setting("webAppUrl"));
     url.searchParams.set("session", this.sessionId);
+    url.searchParams.set("workspace", basename(this.workspaceRoot));
     return url.toString();
   }
 

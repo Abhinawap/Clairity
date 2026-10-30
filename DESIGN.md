@@ -69,6 +69,16 @@ Tint shadows toward the ink token; no pure-black drops.
 - Full-height sections use `min-h-[100dvh]`, never `h-screen`.
 - Mobile: hero top collapses to one column; the canvas keeps a 330px minimum; nav links hide; the install pill and theme toggle stay.
 
+## Projects workspace
+
+- Paper page, sticky `paper/90` nav, dot-grid header wash masked to 320px.
+- Header: asymmetric title block (Dirtyline accent on the `P` in `Projects`) + black `New project` CTA with a one-line extension note.
+- Stats: 3-column `divide-x` strip (projects / live sessions / scene nodes), never cards.
+- Views: cards are the default; the connected card spans both columns and shows its extension session. A `Cards / Rows` toggle sits beside search; rows use a dense table with a tinted, bold column-header strip.
+- Connected cards/rows: mint tint, emerald rule, pulsing live dot; idle rows stay quiet.
+- Mobile: cards stack; row metadata collapses into one mono line; the dialog becomes a 358px paper panel with stacked fields.
+- Dialog: sharp paper panel, 1px emerald top rule, mono uppercase labels, 44px fields, black submit, ink/55 overlay.
+
 ## Component inventory
 
 - `LandingHero` — nav, editorial 2x2 hero, supporting about strip.
@@ -76,6 +86,7 @@ Tint shadows toward the ink token; no pure-black drops.
 - `CodeBlock` — dark code card with a diff and a credits-style scroll panel.
 - `AiMark` — hand-drawn loop/arrow SVG, orange, attached to the headline.
 - `InsideCodebaseSection`, `StartBanner`, `DesignReviewShip` — Figma lower-page sections.
+- `ProjectsHome` — paper workspace index with sticky nav, stat strip, tabbed list, search, empty state, and register dialog.
 - Shared brand shims: `ThemeToggle`, `TopBar`, `ProjectsHome`.
 
 ## Project-specific bans
@@ -103,3 +114,4 @@ Tint shadows toward the ink token; no pure-black drops.
 ## Last updated
 
 2026-10-30 by the landing hero build — established the paper/ink palette, Dirtyline accents, asymmetric canvas/code hero, and hover mechanics.
+2026-10-30 by the projects workspace rebuild — replaced the card grid with a paper index: stat strip, divided rows, live tint, empty state, and a sharp register dialog.

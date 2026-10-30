@@ -17,7 +17,10 @@ const dirtyline = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Clairity — Your design, your files, supercharged with AI",
+  title: {
+    default: "Clairity: Your design, your files, supercharged with AI",
+    template: "%s - Clairity",
+  },
   description: "Edit your real React/Next.js page visually; every Edit becomes a small, reviewable diff in your own code.",
   icons: {
     icon: "/logos/favicon.png",

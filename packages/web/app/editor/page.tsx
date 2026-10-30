@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { EditorShell } from "../../components/editor-shell";
 import { loadHeroFixture } from "../../data/hero-fixture";
 import { SessionProvider } from "../../data/session-provider";
+
+export async function generateMetadata({ searchParams }: Pick<PageProps<"/editor">, "searchParams">): Promise<Metadata> {
+  const { workspace } = await searchParams;
+  const name = Array.isArray(workspace) ? workspace[0] : workspace;
+  return { title: name?.trim() || "Editor" };
+}
 
 // The extension opens /editor?session=<id>, which connects to the broker for that session; without one, the fake
 // extension serves the hero fixture. The fixture is loaded here on the server, so Babel is never bundled for the browser.
