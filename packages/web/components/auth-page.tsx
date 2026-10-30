@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
 
-// shortcut: navigates straight to / on submit until user auth exists (deferred in project-spec.md)
+// shortcut: navigates straight to /projects on submit until user auth exists (deferred in project-spec.md)
 export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -53,7 +53,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
 
           <button
             type="button"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/projects")}
             className="mt-5 flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-[#DAF5EE] bg-[#F2FBF9] text-xs font-medium text-[#172A3A] hover:bg-[#DAF5EE] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:border-[#004346] dark:bg-[#004346]/40 dark:text-[#F2FBF9] dark:hover:bg-[#004346] transition-colors"
           >
             <Image
@@ -84,7 +84,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              router.push("/");
+              router.push("/projects");
             }}
             className="space-y-3 text-xs"
           >

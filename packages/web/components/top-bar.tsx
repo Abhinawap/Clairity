@@ -14,7 +14,7 @@ export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: 
   return (
     <header className="col-span-3 flex h-11 items-center gap-3 border-b border-[#DAF5EE] bg-white px-3 text-[#172A3A] dark:border-[#004346]/70 dark:bg-[#080C0E] dark:text-[#F2FBF9] transition-colors">
       <Link
-        href="/"
+        href="/projects"
         aria-label="Back to projects"
         className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-[#004346] hover:bg-[#DAF5EE] hover:text-[#172A3A] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#DAF5EE] dark:hover:bg-[#004346] dark:hover:text-[#F2FBF9] transition-colors"
       >

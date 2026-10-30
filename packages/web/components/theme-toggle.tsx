@@ -12,7 +12,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="Toggle dark mode"
-      className="grid size-8 place-items-center rounded-md text-[#DAF5EE] hover:bg-[#004346] hover:text-[#F2FBF9] focus-visible:outline-2 focus-visible:outline-[#09BC8A] transition-colors"
+      className="grid size-9 place-items-center rounded-md text-[#004346] transition-colors hover:bg-[#004346]/8 hover:text-[#080C0E] focus-visible:outline-2 focus-visible:outline-[#09BC8A] sm:size-8 dark:text-[#DAF5EE] dark:hover:bg-[#DAF5EE]/10 dark:hover:text-[#F2FBF9]"
     >
       <Moon className="size-4 dark:hidden" aria-hidden />
       <Sun className="hidden size-4 dark:block" aria-hidden />
