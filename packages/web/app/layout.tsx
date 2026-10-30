@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -8,9 +9,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const dirtyline = localFont({
+  src: "./fonts/Dirtyline 36daysoftype 2022.otf",
+  variable: "--font-dirtyline",
+  weight: "400",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Clairity",
-  description: "Edit your React/Next.js page visually; every Edit is a small diff in your own code.",
+  title: "Clairity — Your design, your files, supercharged with AI",
+  description: "Edit your real React/Next.js page visually; every Edit becomes a small, reviewable diff in your own code.",
   icons: {
     icon: "/logos/favicon.png",
   },
@@ -21,7 +29,7 @@ const themeScript = `if (localStorage.theme === "dark" || (!localStorage.theme &
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`h-full antialiased ${plusJakartaSans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`h-full antialiased ${plusJakartaSans.variable} ${dirtyline.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
