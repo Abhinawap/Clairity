@@ -4,13 +4,19 @@ import { randomUUID } from "node:crypto";
 import WebSocket from "ws";
 
 const DEV_SERVER_URL_PATTERN = /https?:\/\/localhost:\d+/;
+const DEV_SERVER_WAIT_MS = 20_000;
 // How long to wait before each reconnect after a drop: it grows from the first value to the last and stays there.
 const RETRY_DELAYS_MS = [250, 500, 1000, 2000, 5000];
 
 // Both addresses are settings (clairity.brokerUrl, clairity.webAppUrl), so a hosted broker or web app needs no rebuild.
-function setting(key: "brokerUrl" | "webAppUrl"): string {
+export function setting(key: "brokerUrl" | "webAppUrl"): string {
   const defaults = { brokerUrl: "ws://localhost:8787", webAppUrl: "http://localhost:3100" };
   return vscode.workspace.getConfiguration("clairity").get<string>(key) || defaults[key];
+}
+
+/** The server's HTTP address: the broker runs in the same process, so it is the broker URL with http(s). */
+export function serverUrl(): string {
+  return setting("brokerUrl").replace(/^ws(s?):/, "http$1:").replace(/\/+$/, "");
 }
 
 export class SessionManager {
@@ -46,8 +52,16 @@ export class SessionManager {
     this.connectToBackend(onReady, onMessage);
   }
 
+  // Resolves once next dev prints its URL, or after DEV_SERVER_WAIT_MS regardless: a dev server that fails or prints
+  // something else must not stop the session (and the editor) from starting. Its output is in the Clairity channel.
   private startDevServer(): Promise<void> {
     return new Promise((resolve) => {
+      setTimeout(() => {
+        if (!this.devServerUrl) {
+          this.output.appendLine(`[clairity] no dev server URL after ${DEV_SERVER_WAIT_MS / 1000}s; connecting anyway`);
+        }
+        resolve();
+      }, DEV_SERVER_WAIT_MS);
       this.devServerProcess = spawn("npx", ["next", "dev"], {
         cwd: this.workspaceRoot,
         shell: true,
@@ -88,13 +102,7 @@ export class SessionManager {
     socket.on("open", () => {
       this.attempt = 0;
       this.output.appendLine(`[clairity] connected to backend at ${url}`);
-      socket.send(
-        JSON.stringify({
-          type: "session:ready",
-          sessionId: this.sessionId,
-          devServerUrl: this.devServerUrl,
-        })
-      );
+      this.announce();
       onReady?.();
     });
 
@@ -120,6 +128,11 @@ export class SessionManager {
       this.output.appendLine(`[clairity] backend connection closed; reconnecting in ${delay} ms`);
       this.retry = setTimeout(() => this.connectToBackend(onReady, onMessage), delay);
     });
+  }
+
+  /** Tells the web app this session's dev server; sent on connect and again whenever the web app (re)joins. */
+  announce(): void {
+    this.send({ type: "session:ready", sessionId: this.sessionId, devServerUrl: this.devServerUrl });
   }
 
   /** Sends a protocol message to the backend if the socket is open; logs and drops it otherwise. */

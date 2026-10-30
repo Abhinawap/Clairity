@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveTailwind } from "../src/tailwind";
+import { resolveTailwind, styleClasses } from "../src/tailwind";
 
 describe("resolveTailwind", () => {
   it("maps base spacing tokens and passes variants, arbitrary values and custom classes through", () => {
@@ -62,5 +62,39 @@ describe("resolveTailwind", () => {
 
   it("ignores extra whitespace", () => {
     expect(resolveTailwind("  ")).toEqual({ style: {}, passthroughClasses: [] });
+  });
+});
+
+describe("styleClasses", () => {
+  it("pairs each property's new class with the one it replaces, even when a property drops two classes", () => {
+    // padding px-4 py-2 -> p-6 drops two classes for one, and the width that follows still replaces w-48
+    const out = styleClasses("px-4 py-2 w-48 rounded", { padding: { top: "1.5rem", right: "1.5rem", bottom: "1.5rem", left: "1.5rem" }, width: "240px" });
+    expect(out).toEqual({ removed: ["px-4", "w-48", "py-2"], added: ["p-6", "w-60"] });
+  });
+
+  it("leaves responsive and state variants alone", () => {
+    expect(styleClasses("text-5xl md:text-6xl hover:text-blue-500 text-gray-900", { fontSize: "var(--text-4xl)" })).toEqual({ removed: ["text-5xl"], added: ["text-4xl"] });
+  });
+});
+
+describe("resolveTailwind with arbitrary values", () => {
+  it("reads arbitrary values of modelled utilities as style, and keeps others and variants verbatim", () => {
+    expect(resolveTailwind("w-[240px] text-[#0f172a] text-[2.5rem] bg-[oklch(0.7_0.1_200)] rounded-[12px] font-[650] px-[3px] bg-[url(/a.png)] md:w-[10px]")).toEqual({
+      style: {
+        width: "240px",
+        color: "#0f172a",
+        fontSize: "2.5rem",
+        backgroundColor: "oklch(0.7 0.1 200)",
+        borderRadius: "12px",
+        fontWeight: "650",
+        padding: { top: "0", right: "3px", bottom: "0", left: "3px" },
+      },
+      passthroughClasses: ["bg-[url(/a.png)]", "md:w-[10px]"],
+    });
+  });
+
+  it("round-trips every value styleClasses writes", () => {
+    const style = { width: "17px", color: "#0f172a", fontSize: "2.5rem", borderRadius: "12px", backgroundColor: "#abcdef" };
+    expect(resolveTailwind(styleClasses("", style).added.join(" ")).style).toEqual(style);
   });
 });

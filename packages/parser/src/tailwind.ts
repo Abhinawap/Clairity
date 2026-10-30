@@ -71,7 +71,33 @@ export function resolveTailwind(className: string): { style: Style; passthroughC
   const box: { prop: "padding" | "margin"; rank: number; sides: Side[]; value: string }[] = [];
 
   for (const token of className.split(/\s+/).filter(Boolean)) {
-    // variants (md:, hover:), arbitrary values ([...]) and !important stay verbatim
+    // Arbitrary values of the utilities modelled here (w-[240px], text-[#0f172a], p-[1.5rem]) map like scale ones,
+    // so a value the inspector or a Proposal wrote reads back as that style.
+    const arb = token.match(/^([a-z]+)-\[([^\]]+)\]$/);
+    if (arb) {
+      const [, utility, raw] = arb;
+      const value = raw.replace(/_/g, " ");
+      const boxArb = utility.match(/^([pm])([xytrbl]?)$/);
+      if (boxArb) {
+        box.push({ prop: boxArb[1] === "p" ? "padding" : "margin", value, ...BOX_SIDES[boxArb[2]] });
+        continue;
+      }
+      const key: keyof Style | undefined =
+        utility === "w" ? "width"
+        : utility === "h" ? "height"
+        : utility === "rounded" ? "borderRadius"
+        : utility === "bg" && looksLikeColor(value) ? "backgroundColor"
+        : utility === "text" && (value.startsWith("color:") || looksLikeColor(value)) ? "color"
+        : utility === "text" && (px(value) !== undefined || /^(var\(--text|calc|clamp|\d)/.test(value)) ? "fontSize"
+        : utility === "font" && /^\d+$/.test(value) ? "fontWeight"
+        : undefined;
+      if (key) {
+        (style as Record<string, string>)[key] = value.replace(/^color:/, "");
+        continue;
+      }
+    }
+
+    // variants (md:, hover:), other arbitrary values ([...]) and !important stay verbatim
     if (/[:[!]/.test(token)) {
       passthroughClasses.push(token);
       continue;
@@ -115,4 +141,91 @@ export function resolveTailwind(className: string): { style: Style; passthroughC
   }
 
   return { style, passthroughClasses };
+}
+
+// ---- Style -> classes: the inverse of resolveTailwind, checked against it so the two can't disagree. ----
+
+type StyleKey = Exclude<keyof Style, "padding" | "margin">;
+// The utility each property is written with. text- is shared: its arbitrary value says which (color or size).
+const UTILITY: Partial<Record<StyleKey, string>> = {
+  width: "w", height: "h", borderRadius: "rounded", backgroundColor: "bg", color: "text", fontSize: "text", fontWeight: "font",
+};
+const SPACING_STEPS = ["px", ...Array.from({ length: 193 }, (_, i) => String(i / 2))]; // 0, 0.5, … 96
+const SHADES = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"];
+const CANDIDATES: Record<string, string[]> = {
+  w: [...SPACING_STEPS, "full", "auto", "screen", "1/2", "1/3", "2/3", "1/4", "3/4"],
+  h: [...SPACING_STEPS, "full", "auto", "screen", "1/2"],
+  rounded: ["", "none", "full", ...RADII],
+  bg: ["transparent", "current", "white", "black", ...[...PALETTE].flatMap((c) => SHADES.map((s) => `${c}-${s}`))],
+  text: [...TEXT_SIZES, "transparent", "current", "white", "black", ...[...PALETTE].flatMap((c) => SHADES.map((s) => `${c}-${s}`))],
+  font: [...WEIGHTS],
+};
+
+// Lengths compare by pixels (1rem = 16px), so a canvas drag to "240px" finds w-60 (15rem).
+function px(value: string): number | undefined {
+  const m = value.trim().match(/^(-?\d*\.?\d+)(px|rem)?$/);
+  if (!m) return undefined;
+  return Number(m[1]) * (m[2] === "rem" ? 16 : 1);
+}
+const same = (a: string | undefined, b: string) => a !== undefined && (a === b || (px(a) !== undefined && px(a) === px(b)));
+const looksLikeColor = (v: string) => /^(#|rgb|hsl|oklch|var\(--color)/.test(v) || ["transparent", "currentColor"].includes(v);
+
+const token = (utility: string, value: string) => (value === "" ? utility : `${utility}-${value}`);
+
+/** The class that sets one property to `value`: a scale class when one matches, else an arbitrary value. */
+export function classFor(property: StyleKey, value: string): string {
+  const utility = UTILITY[property];
+  if (!utility) throw new Error(`No Tailwind utility for ${property}`);
+  const scale = CANDIDATES[utility].map((v) => token(utility, v)).find((t) => same(resolveTailwind(t).style[property] as string, value));
+  // Tailwind reads text-[…] as a color when the value looks like one, else as a size; color: prefix forces it
+  const arbitrary = property === "color" && !looksLikeColor(value) ? `text-[color:${value}]` : `${utility}-[${value.replace(/\s+/g, "_")}]`;
+  return scale ?? arbitrary;
+}
+
+function spacingClass(prefix: string, value: string): string {
+  if (value === "auto") return `${prefix}-auto`;
+  const scale = SPACING_STEPS.find((s) => same(spacing(s), value));
+  return scale !== undefined ? `${prefix}-${scale}` : `${prefix}-[${value}]`;
+}
+
+// Fewest classes for a box: p-4, px-4 py-2, or one per side.
+function boxClasses(letter: "p" | "m", box: BoxValue): string[] {
+  const { top, right, bottom, left } = box;
+  if (top === right && right === bottom && bottom === left) return [spacingClass(letter, top)];
+  if (top === bottom && right === left) return [spacingClass(`${letter}x`, right), spacingClass(`${letter}y`, top)];
+  return [spacingClass(`${letter}t`, top), spacingClass(`${letter}r`, right), spacingClass(`${letter}b`, bottom), spacingClass(`${letter}l`, left)];
+}
+
+/** Whether a base (unprefixed) token currently sets this property: a scale class or an arbitrary one. */
+function setsProperty(tok: string, property: keyof Style): boolean {
+  if (/[:!]/.test(tok)) return false; // variants (md:, hover:) and !important are other states, left alone
+  if (property === "padding" || property === "margin") return new RegExp(`^-?${property[0]}[xytrbl]?-`).test(tok);
+  if (resolveTailwind(tok).style[property] !== undefined) return true;
+  const arb = tok.match(/^([a-z]+)-\[(.+)\]$/);
+  if (!arb || arb[1] !== UTILITY[property]) return false;
+  if (arb[1] !== "text") return true;
+  const value = arb[2].replace(/^color:/, "");
+  return property === "color" ? arb[2].startsWith("color:") || looksLikeColor(value) : !arb[2].startsWith("color:") && !looksLikeColor(value);
+}
+
+/**
+ * The class change that gives an element these style values: the tokens that set each property now, and the ones
+ * that will. Only base tokens are touched; responsive and state variants stay as they are.
+ */
+export function styleClasses(className: string, style: Partial<Style>): { removed: string[]; added: string[] } {
+  const tokens = className.split(/\s+/).filter(Boolean);
+  const perProperty: { removed: string[]; added: string[] }[] = [];
+  for (const [property, value] of Object.entries(style) as [keyof Style, Style[keyof Style]][]) {
+    if (value === undefined) continue;
+    const taken = perProperty.flatMap((p) => p.removed);
+    const removed = tokens.filter((t) => setsProperty(t, property) && !taken.includes(t));
+    const added = property === "padding" || property === "margin" ? boxClasses(property === "padding" ? "p" : "m", value as BoxValue) : [classFor(property, value as string)];
+    perProperty.push({ removed, added });
+  }
+  // editClasses puts added tokens where removed ones were, in order: so each property's new classes are paired
+  // with the ones they replace first, and only then come the leftovers (extra removals, then extra additions).
+  const paired = (p: { removed: string[]; added: string[] }) => Math.min(p.removed.length, p.added.length);
+  const removed = [...perProperty.flatMap((p) => p.removed.slice(0, paired(p))), ...perProperty.flatMap((p) => p.removed.slice(paired(p)))];
+  const added = [...perProperty.flatMap((p) => p.added.slice(0, paired(p))), ...perProperty.flatMap((p) => p.added.slice(paired(p)))];
+  return { removed, added };
 }

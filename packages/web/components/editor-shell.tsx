@@ -5,6 +5,7 @@ import { AiPanel } from "./ai-panel";
 import { CanvasPreview } from "./canvas-preview";
 import { CodeView } from "./code-view";
 import { Inspector } from "./inspector";
+import { LivePreview } from "./live-preview";
 import { LayerTree } from "./layer-tree";
 import { TopBar, type View } from "./top-bar";
 
@@ -18,7 +19,7 @@ export function EditorShell() {
           <LayerTree />
         </aside>
         <main className="flex min-h-0 flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-          {view === "visual" ? <CanvasPreview /> : <CodeView />}
+          {view === "visual" ? <CanvasPreview /> : view === "live" ? <LivePreview /> : <CodeView />}
         </main>
         <aside aria-label="Inspector and AI" className="flex min-h-0 flex-col border-l border-zinc-200 dark:border-zinc-800">
           <div className="min-h-0 flex-1 overflow-auto">

@@ -246,3 +246,30 @@ it("sends nothing when no Proposal is pending", () => {
   createSession(fake.link).getState().applyProposal(["anything"]);
   expect(fake.received).toEqual([]);
 });
+
+it("drops a held source file once an Edit changes that file, so Code view reads it again", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  session.getState().readSource(hero.file);
+  await wire();
+  expect(Object.keys(session.getState().sources)).toEqual([hero.file]);
+  session.getState().applyEdit(byName("h1").id, { color: "#111827" });
+  await wire();
+  expect(session.getState().sources).toEqual({});
+});
+
+it("shows the extension's error when a Proposal can't be made, and stops streaming", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  fake.emit({ type: "intent:proposal.partial", proposalId: "p", partial: "Asking…" });
+  fake.emit({ type: "intent:error", proposalId: "p", message: "NEBIUS_API_KEY is not set on the Clairity server" });
+  expect(session.getState()).toMatchObject({ streaming: "", lastError: "NEBIUS_API_KEY is not set on the Clairity server" });
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("holds the project's dev server address from the extension's session:ready, for the Live view", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  expect(session.getState().devServerUrl).toBeUndefined();
+  fake.emit({ type: "session:ready", sessionId: "s", devServerUrl: "http://localhost:3000" });
+  expect(session.getState().devServerUrl).toBe("http://localhost:3000");
+});

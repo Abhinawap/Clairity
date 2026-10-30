@@ -89,6 +89,13 @@ export type IntentProposalPartialMessage = {
   partial: string; // streamed raw text/JSON chunk
 };
 
+// The Proposal could not be made (the model or the server failed); nothing was proposed.
+export type IntentErrorMessage = {
+  type: "intent:error";
+  proposalId: string;
+  message: string;
+};
+
 export type IntentProposalDoneMessage = {
   type: "intent:proposal.done";
   proposal: Proposal;
@@ -111,4 +118,5 @@ export type ProtocolMessage =
   | ProposalApplyMessage
   | AgentStopMessage
   | IntentProposalPartialMessage
-  | IntentProposalDoneMessage;
+  | IntentProposalDoneMessage
+  | IntentErrorMessage;

@@ -5,12 +5,14 @@ import { ToggleGroup } from "radix-ui";
 import { useSession } from "../data/session-provider";
 import { ThemeToggle } from "./theme-toggle";
 
-export type View = "visual" | "code";
+// visual: the scene graph on the canvas. live: the project's own running page. code: the source.
+export type View = "visual" | "live" | "code";
 
 export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: View): void }) {
   const file = useSession((s) => s.roots[0]?.source.file);
   const connection = useSession((s) => s.connection);
   const extension = useSession((s) => s.extension);
+  const devServerUrl = useSession((s) => s.devServerUrl);
   return (
     <header className="col-span-3 flex h-11 items-center gap-3 border-b border-zinc-200 px-3 dark:border-zinc-800">
       <Link
@@ -40,7 +42,7 @@ export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: 
         aria-label="Canvas view"
         className="flex rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800"
       >
-        {(["visual", "code"] as const).map((v) => (
+        {(devServerUrl ? (["visual", "live", "code"] as const) : (["visual", "code"] as const)).map((v) => (
           <ToggleGroup.Item
             key={v}
             value={v}

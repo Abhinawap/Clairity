@@ -1,7 +1,8 @@
 import Database from "better-sqlite3";
 import { join } from "node:path";
 
-const dbPath = join(process.cwd(), "clairity.db");
+// DB_PATH puts the database on a volume in a container; it holds session metadata only, never source code.
+const dbPath = process.env.DB_PATH ?? join(process.cwd(), "clairity.db");
 export const db = new Database(dbPath);
 
 db.pragma("journal_mode = WAL");
