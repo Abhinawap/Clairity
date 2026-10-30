@@ -101,7 +101,9 @@ A data layer inside the web app that owns the scene graph, the selection and eve
 **Choosing fake or real**
 
 - An address without a session ID runs the fake extension; that is how the frontend partner works. An address with `?session=<id>`, which the extension opens, connects to the broker. Until the broker connection exists, only the fake runs.
-- The broker connection (later) reads the session ID from the address, reports the connection state, reconnects after a drop, and expects the extension to resend `graph:full` on reconnect (project spec, failure handling). The broker URL and how a connection names its session are the broker owner's decisions.
+- The broker connection reads the session ID from the address, reports the connection state (`connecting`, `connected`, or `disconnected` while it retries), reconnects after a drop, and takes the `graph:full` the extension resends as the new scene graph (project spec, failure handling).
+- Decided 2026-10-30 with the broker as built (`packages/server/src/sessionBroker.ts`): both sides connect to the broker's WebSocket with `?sessionId=<id>&role=extension|web`, and the broker pairs them. When the web app joins a session whose extension is already connected, the broker sends the extension `peer:joined` and the extension resends `graph:full`; the extension also resends it whenever its own socket reconnects.
+- The extension opens `<webAppUrl>/editor?session=<id>` on its first connect and offers **Clairity: Open Editor** to reopen it. The broker and web app addresses are the extension settings `clairity.brokerUrl` (default `ws://localhost:8787`) and `clairity.webAppUrl` (default `http://localhost:3100`), and the web app's `NEXT_PUBLIC_BROKER_URL`. The web app runs on port 3100, so it never takes the port of the project's own `next dev`.
 
 ## Testing Decisions
 

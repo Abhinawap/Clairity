@@ -5,6 +5,8 @@ import type { EditApplyMessage, IntentRequestMessage, ProtocolMessage } from "./
 
 // The extension side of the protocol: the fake extension, or (later) the broker connection.
 export type ExtensionLink = {
+  // Which extension is on the other end, so the top bar can say whether edits reach real files.
+  kind: "fake" | "broker";
   open(onMessage: (message: ProtocolMessage) => void, onConnection: (connection: Connection) => void): void;
   send(message: ProtocolMessage): void;
   // Optional: nothing to close for the fake. The real link closes its socket, so a reload or a
@@ -12,11 +14,13 @@ export type ExtensionLink = {
   close?(): void;
 };
 
-export type Connection = "connecting" | "connected";
+// "disconnected" means a real session lost the broker and is reconnecting; the fake never drops.
+export type Connection = "connecting" | "connected" | "disconnected";
 
 export type SessionState = {
   roots: IRNode[];
   connection: Connection;
+  extension: ExtensionLink["kind"];
   selectedId?: string;
   // Source files by path, as the extension last sent them (see readSource).
   sources: Record<string, string>;
@@ -94,6 +98,7 @@ export function createSessionStore(link: ExtensionLink) {
   return createStore<SessionState>()((set, get) => ({
     roots: [],
     connection: "connecting",
+    extension: link.kind,
     sources: {},
     streaming: "",
     select: (id) => set({ selectedId: id }),

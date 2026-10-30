@@ -26,10 +26,25 @@
   "contributes": {
     "commands": [
       {
-        "command": "clairity.helloWorld",
-        "title": "Hello World"
+        "command": "clairity.openEditor",
+        "title": "Clairity: Open Editor"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Clairity",
+      "properties": {
+        "clairity.brokerUrl": {
+          "type": "string",
+          "default": "ws://localhost:8787",
+          "description": "WebSocket address of the Clairity session broker."
+        },
+        "clairity.webAppUrl": {
+          "type": "string",
+          "default": "http://localhost:3100",
+          "description": "Address of the Clairity web app. The extension opens its editor with this session's ID."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",

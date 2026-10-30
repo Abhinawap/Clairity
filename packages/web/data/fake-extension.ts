@@ -51,6 +51,7 @@ export function fakeExtension(fixture: Fixture, { propose = (proposal: Proposal)
     setTimeout(() => deliver(sent));
   };
   const link: ExtensionLink = {
+    kind: "fake",
     open(onMessage, onConnection) {
       // Cloned like a real wire would, so the store never shares objects with the fake's copy.
       deliver = (message) => onMessage(structuredClone(message));

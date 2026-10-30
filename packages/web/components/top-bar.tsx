@@ -10,6 +10,7 @@ export type View = "visual" | "code";
 export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: View): void }) {
   const file = useSession((s) => s.roots[0]?.source.file);
   const connection = useSession((s) => s.connection);
+  const extension = useSession((s) => s.extension);
   return (
     <header className="col-span-3 flex h-11 items-center gap-3 border-b border-zinc-200 px-3 dark:border-zinc-800">
       <Link
@@ -28,9 +29,8 @@ export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: 
           aria-hidden
           className={`size-2 rounded-full ${connection === "connected" ? "bg-emerald-500" : "animate-pulse bg-amber-500"}`}
         />
-        {connection === "connected" ? "Connected" : "Connecting…"}
-        {/* shortcut: always the fake until the broker connection exists (web-data-layer slice 7) */}
-        <span className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">Fake extension</span>
+        {{ connected: "Connected", connecting: "Connecting…", disconnected: "Reconnecting…" }[connection]}
+        <span className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">{extension === "fake" ? "Fake extension" : "Live session"}</span>
       </span>
       <ToggleGroup.Root
         type="single"

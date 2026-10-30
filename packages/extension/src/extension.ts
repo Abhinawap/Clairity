@@ -102,8 +102,6 @@ function handleIncomingMessage(message: unknown, workspaceRoot: string, output: 
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  vscode.window.showInformationMessage("Clairity: activate() ran!");
-
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   if (!workspaceRoot) {
@@ -113,9 +111,23 @@ export function activate(context: vscode.ExtensionContext) {
 
   const output = vscode.window.createOutputChannel("Clairity");
 
-  sessionManager = new SessionManager(workspaceRoot);
-  sessionManager.start(
-    () => sendInitialGraph(workspaceRoot, output),
+  const session = new SessionManager(workspaceRoot);
+  sessionManager = session;
+  // Opens the editor with this session in its address, so the developer never copies a session ID by hand.
+  const openEditor = () => {
+    output.appendLine(`[clairity] opening ${session.editorUrl}`);
+    void vscode.env.openExternal(vscode.Uri.parse(session.editorUrl));
+  };
+  let opened = false;
+  session.start(
+    () => {
+      sendInitialGraph(workspaceRoot, output);
+      // Only on the first connect: a reconnect must not open a second tab.
+      if (!opened) {
+        opened = true;
+        openEditor();
+      }
+    },
     (message) => handleIncomingMessage(message, workspaceRoot, output)
   );
 
@@ -126,7 +138,7 @@ export function activate(context: vscode.ExtensionContext) {
   }, output);
   watcher.start();
 
-  context.subscriptions.push({
+  context.subscriptions.push(vscode.commands.registerCommand("clairity.openEditor", openEditor), {
     dispose: () => {
       sessionManager?.dispose();
       watcher?.dispose();
