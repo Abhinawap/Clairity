@@ -17,7 +17,7 @@ A Node holding one stretch of literal text written between tags in source; a hea
 _Avoid_: text node (that is the DOM's), text content, locked text
 
 **Passthrough class**:
-A styling token kept verbatim on a node because the tool does not model it, such as a breakpoint variant or an arbitrary value.
+A styling token kept verbatim on a node because the tool does not model it, such as a breakpoint variant or an arbitrary value of a utility it does not model (`bg-[url(…)]`).
 _Avoid_: unknown class, unsupported class
 
 **Read-only node**:
