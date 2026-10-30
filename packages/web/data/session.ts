@@ -1,6 +1,7 @@
 import type { IRNode } from "parser";
 import { createStore } from "zustand/vanilla";
-import type { EditApplyMessage, ProtocolMessage } from "./protocol";
+import type { Proposal } from "./proposal";
+import type { EditApplyMessage, IntentRequestMessage, ProtocolMessage } from "./protocol";
 
 // The extension side of the protocol: the fake extension, or (later) the broker connection.
 export type ExtensionLink = {
@@ -16,6 +17,10 @@ export type SessionState = {
   selectedId?: string;
   // Source files by path, as the extension last sent them (see readSource).
   sources: Record<string, string>;
+  // The raw text of a Proposal still streaming, so the AI panel can show progress; empty when none is.
+  streaming: string;
+  // The finished Proposal waiting for the developer to accept or reject its Changes.
+  proposal?: Proposal;
   // Selection is local state: it sends nothing to the extension.
   select(id: string): void;
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
@@ -27,9 +32,13 @@ export type SessionState = {
   applyText(runId: string, text: string): void;
   // Asks the extension for a file, such as the selected Node's `source.file`; its contents land in `sources` under that path.
   readSource(file: string): void;
+  // Asks the model for a Proposal, scoped to one Node (the selected Node's id) or to the whole page.
+  // Like every action it changes nothing: streaming text and the Proposal arrive as the extension's replies.
+  requestProposal(request: { scope: IntentRequestMessage["scope"]; prompt: string; nodeId?: string }): void;
 };
 
-const flatten = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)]);
+// Every Node in the tree, parents before their children.
+export const flatten = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)]);
 export const findNode = (nodes: IRNode[], id: string | undefined) => flatten(nodes).find((n) => n.id === id);
 
 // Replaces the Node with this id, children included. An id not in the tree replaces nothing.
@@ -55,6 +64,10 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
       };
     case "source:content":
       return { ...state, sources: { ...state.sources, [message.file]: message.content } };
+    case "intent:proposal.partial":
+      return { ...state, streaming: state.streaming + message.partial };
+    case "intent:proposal.done":
+      return { ...state, proposal: message.proposal, streaming: "" };
     default:
       return state;
   }
@@ -65,6 +78,7 @@ export function createSession(link: ExtensionLink) {
     roots: [],
     connection: "connecting",
     sources: {},
+    streaming: "",
     select: (id) => set({ selectedId: id }),
     applyEdit(nodeId, style) {
       if (findNode(get().roots, nodeId)?.editable) link.send({ type: "edit:apply", nodeId, style });
@@ -74,6 +88,9 @@ export function createSession(link: ExtensionLink) {
       if (run?.type === "text" && run.editable) link.send({ type: "text:apply", nodeId: runId, text });
     },
     readSource: (file) => link.send({ type: "source:read", file }),
+    // ponytail: nodeId is required on the wire, so page scope sends ""; asked Varutieru whether it becomes optional (#12)
+    requestProposal: ({ scope, prompt, nodeId = "" }) =>
+      link.send({ type: "intent:request", scope, prompt, nodeId: scope === "page" ? "" : nodeId }),
   }));
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),

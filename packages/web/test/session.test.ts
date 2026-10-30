@@ -1,15 +1,14 @@
 import { readFileSync } from "node:fs";
-import type { IRNode } from "parser";
 import { expect, it } from "vitest";
 import { fakeExtension } from "../data/fake-extension";
 import { loadHeroFixture } from "../data/hero-fixture";
 import type { ProtocolMessage } from "../data/protocol";
-import { createSession, findNode, selectedNode, textRuns } from "../data/session";
+import { createSession, findNode, flatten, selectedNode, textRuns } from "../data/session";
 
 const hero = loadHeroFixture();
 // The hero's scene graph, written out: packages/parser/test/parse.test.ts.
 const { roots } = hero;
-const all = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...all(n.children)]);
+const all = flatten;
 const byName = (name: string) => all(roots).find((n) => n.name === name)!;
 // The fake replies on a later tick, like a real wire.
 const wire = () => new Promise((resolve) => setTimeout(resolve));
@@ -142,4 +141,45 @@ it("holds nothing for a file the fake does not serve", async () => {
   session.getState().readSource("components/missing.tsx");
   await wire();
   expect(session.getState().sources).toEqual({});
+});
+
+it("requests a node-scoped Proposal with the prompt and the Node id, and a page-scoped one with an empty Node id", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  const h1 = byName("h1");
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: h1.id });
+  session.getState().requestProposal({ scope: "page", prompt: "Responsive for mobile", nodeId: h1.id });
+  expect(fake.received).toEqual([
+    { type: "intent:request", scope: "node", prompt: "More premium", nodeId: h1.id },
+    { type: "intent:request", scope: "page", prompt: "Responsive for mobile", nodeId: "" },
+  ]);
+});
+
+it("shows a streaming Proposal's raw text, then holds the finished Proposal and clears the streaming text", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  const seen: { streaming: string; proposal?: unknown }[] = [];
+  session.subscribe(({ streaming, proposal }) => seen.push({ streaming, proposal }));
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: byName("h1").id });
+  expect(session.getState().streaming).toBe("");
+  await wire();
+  const { proposal } = session.getState();
+  expect(seen).toEqual([
+    { streaming: JSON.stringify(proposal), proposal: undefined },
+    { streaming: "", proposal },
+  ]);
+  expect(proposal).toMatchObject({ intent: "More premium", scope: "node" });
+});
+
+it("streams a canned Proposal whose Changes target editable hero Nodes, with at least one style and one text Change", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  session.getState().requestProposal({ scope: "page", prompt: "Anything" });
+  await wire();
+  const changes = session.getState().proposal?.changes ?? [];
+  expect(new Set(changes.map((c) => c.id)).size).toBe(changes.length);
+  expect(changes.map((c) => c.kind)).toEqual(expect.arrayContaining(["style", "text"]));
+  for (const c of changes) {
+    const target = "nodeId" in c ? findNode(roots, c.nodeId) : undefined;
+    expect(target?.editable).toBe(true);
+    if (c.kind === "text") expect(target?.type).toBe("text");
+  }
 });
