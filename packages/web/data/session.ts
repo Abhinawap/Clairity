@@ -21,6 +21,8 @@ export type SessionState = {
   roots: IRNode[];
   connection: Connection;
   extension: ExtensionLink["kind"];
+  // The project's own dev server, from the extension's session:ready, for the Live view. The fake has none.
+  devServerUrl?: string;
   selectedId?: string;
   // Source files by path, as the extension last sent them (see readSource).
   sources: Record<string, string>;
@@ -28,7 +30,8 @@ export type SessionState = {
   streaming: string;
   // The finished Proposal waiting for the developer to accept or reject its Changes.
   proposal?: Proposal;
-  // The extension's message when it refused to apply a Proposal; the Proposal stays so the panel can show both.
+  // The extension's message when it could not make a Proposal, or refused to apply one (the Proposal then stays,
+  // so the panel can show both).
   lastError?: string;
   // Selection is local state: it sends nothing to the extension.
   select(id: string): void;
@@ -67,19 +70,28 @@ export const textRuns = (node: IRNode | undefined) =>
 // Every incoming message goes through here. Messages meant for the extension, and unknown types, change nothing.
 function applyMessage(state: SessionState, message: ProtocolMessage): SessionState {
   switch (message.type) {
+    // A changed scene graph means its file changed too, so a held copy of that source is dropped and Code view
+    // asks again: graph:full drops every file, graph:patch the files of the Nodes it carries.
     case "graph:full":
-      return { ...state, roots: message.nodes };
-    case "graph:patch":
+      return { ...state, roots: message.nodes, sources: {} };
+    case "graph:patch": {
+      const changedFiles = new Set(message.nodes.map((n) => n.source.file));
       return {
         ...state,
         roots: message.changedNodeIds.reduce((roots, oldId, i) => replaceNode(roots, oldId, message.nodes[i]), state.roots),
+        sources: Object.fromEntries(Object.entries(state.sources).filter(([file]) => !changedFiles.has(file))),
       };
+    }
+    case "session:ready":
+      return { ...state, devServerUrl: message.devServerUrl || undefined };
     case "source:content":
       return { ...state, sources: { ...state.sources, [message.file]: message.content } };
     case "intent:proposal.partial":
       return { ...state, streaming: state.streaming + message.partial };
     case "intent:proposal.done":
       return { ...state, proposal: message.proposal, streaming: "", lastError: undefined };
+    case "intent:error":
+      return { ...state, streaming: "", lastError: message.message };
     // A reply about a Proposal that is no longer pending changes nothing.
     case "proposal:applied":
       return state.proposal?.id === message.proposalId ? { ...state, proposal: undefined, lastError: undefined } : state;
