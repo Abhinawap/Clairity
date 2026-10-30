@@ -1,3 +1,4 @@
 export type { IRNode } from "./ir";
 export { nodeId, parseFile } from "./parse";
-export { editClasses } from "./transform";
+export { editClasses, editNodes, editStyle, editText, type NodeEdit } from "./transform";
+export { classFor, styleClasses } from "./tailwind";

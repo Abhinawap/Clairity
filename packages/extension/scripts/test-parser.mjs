@@ -1,1 +1,0 @@
-import { parseComponent } from "../dist/extension.js"; // we'll fix this import path below

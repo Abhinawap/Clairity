@@ -65,6 +65,18 @@ export function readOnlyReason(el: JSXElement): string | undefined {
   return undefined;
 }
 
+/**
+ * The source range of a text run: the JSXText's own range without its leading and trailing whitespace, and the
+ * text as the scene graph shows it (whitespace collapsed). Undefined for whitespace-only JSXText, which is no run.
+ * Shared by parseFile (the run's id and source) and editText (where to splice), so both find the same run.
+ */
+export function textRun(code: string, t: JSXText): { start: number; end: number; text: string } | undefined {
+  const text = t.value.replace(/\s+/g, " ").trim();
+  if (!text) return undefined;
+  const raw = code.slice(t.start!, t.end!);
+  return { start: t.start! + raw.length - raw.trimStart().length, end: t.end! - (raw.length - raw.trimEnd().length), text };
+}
+
 /** Visits every outermost JSXElement under `node`, not descending into the elements themselves. */
 export function outermostJsx(node: unknown, visit: (el: JSXElement | JSXFragment) => void): void {
   if (!node || typeof node !== "object") return;
@@ -98,12 +110,8 @@ export function parseFile(code: string, file: string): IRNode[] {
   };
 
   const text = (t: JSXText): IRNode | undefined => {
-    const value = t.value.replace(/\s+/g, " ").trim();
-    if (!value) return undefined;
-    const raw = code.slice(t.start!, t.end!);
-    const lead = raw.length - raw.trimStart().length;
-    const trail = raw.length - raw.trimEnd().length;
-    return { ...irNode("text", "#text", t.start! + lead, t.end! - trail), text: value };
+    const run = textRun(code, t);
+    return run && { ...irNode("text", "#text", run.start, run.end), text: run.text };
   };
 
   const children = (kids: (JSXElement | JSXFragment)["children"]): IRNode[] =>

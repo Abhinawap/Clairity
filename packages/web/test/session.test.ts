@@ -1,15 +1,14 @@
 import { readFileSync } from "node:fs";
-import type { IRNode } from "parser";
 import { expect, it } from "vitest";
 import { fakeExtension } from "../data/fake-extension";
 import { loadHeroFixture } from "../data/hero-fixture";
 import type { ProtocolMessage } from "../data/protocol";
-import { createSession, findNode, selectedNode, textRuns } from "../data/session";
+import { createSession, findNode, flatten, selectedNode, textRuns } from "../data/session";
 
 const hero = loadHeroFixture();
 // The hero's scene graph, written out: packages/parser/test/parse.test.ts.
 const { roots } = hero;
-const all = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...all(n.children)]);
+const all = flatten;
 const byName = (name: string) => all(roots).find((n) => n.name === name)!;
 // The fake replies on a later tick, like a real wire.
 const wire = () => new Promise((resolve) => setTimeout(resolve));
@@ -142,4 +141,135 @@ it("holds nothing for a file the fake does not serve", async () => {
   session.getState().readSource("components/missing.tsx");
   await wire();
   expect(session.getState().sources).toEqual({});
+});
+
+it("requests a node-scoped Proposal with the prompt and the Node id, and a page-scoped one with an empty Node id", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  const h1 = byName("h1");
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: h1.id });
+  session.getState().requestProposal({ scope: "page", prompt: "Responsive for mobile", nodeId: h1.id });
+  expect(fake.received).toEqual([
+    { type: "intent:request", scope: "node", prompt: "More premium", nodeId: h1.id },
+    { type: "intent:request", scope: "page", prompt: "Responsive for mobile", nodeId: "" },
+  ]);
+});
+
+it("shows a streaming Proposal's raw text, then holds the finished Proposal and clears the streaming text", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  const seen: { streaming: string; proposal?: unknown }[] = [];
+  session.subscribe(({ streaming, proposal }) => seen.push({ streaming, proposal }));
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: byName("h1").id });
+  expect(session.getState().streaming).toBe("");
+  await wire();
+  const { proposal } = session.getState();
+  expect(seen).toEqual([
+    { streaming: JSON.stringify(proposal), proposal: undefined },
+    { streaming: "", proposal },
+  ]);
+  expect(proposal).toMatchObject({ intent: "More premium", scope: "node" });
+});
+
+it("streams a canned Proposal whose Changes target editable hero Nodes, with at least one style and one text Change", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  session.getState().requestProposal({ scope: "page", prompt: "Anything" });
+  await wire();
+  const changes = session.getState().proposal?.changes ?? [];
+  expect(new Set(changes.map((c) => c.id)).size).toBe(changes.length);
+  expect(changes.map((c) => c.kind)).toEqual(expect.arrayContaining(["style", "text"]));
+  for (const c of changes) {
+    const target = "nodeId" in c ? findNode(roots, c.nodeId) : undefined;
+    expect(target?.editable).toBe(true);
+    if (c.kind === "text") expect(target?.type).toBe("text");
+  }
+});
+
+// A session holding the fake's canned Proposal: style color and fontSize on the h1, and new text on its first run.
+async function withProposal(fake = fakeExtension(hero)) {
+  const session = createSession(fake.link);
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: byName("h1").id });
+  await wire();
+  return { fake, session, proposal: session.getState().proposal! };
+}
+const changeId = (proposal: { changes: { id: string }[] }, suffix: string) => proposal.changes.find((c) => c.id.endsWith(suffix))!.id;
+
+it("accepts every Change: sends them all, shows the new style and text after the patch, and clears the Proposal", async () => {
+  const { fake, session, proposal } = await withProposal();
+  const ids = proposal.changes.map((c) => c.id);
+  session.getState().applyProposal(ids);
+  expect(fake.received.at(-1)).toEqual({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds: ids });
+  expect(session.getState().proposal).toEqual(proposal);
+  await wire();
+  const h1 = findNode(session.getState().roots, byName("h1").id)!;
+  expect(h1.style).toMatchObject({ color: "#0f172a", fontSize: "var(--text-6xl)" });
+  expect(textRuns(h1).map((run) => run.text)).toEqual(["The visual editor you're", "looking for"]);
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("accepts a subset: applies only those Changes and leaves Nodes targeted only by rejected Changes alone", async () => {
+  const { session, proposal } = await withProposal();
+  session.getState().applyProposal([changeId(proposal, ":text")]);
+  await wire();
+  const h1 = findNode(session.getState().roots, byName("h1").id)!;
+  expect(h1.style).toEqual(byName("h1").style);
+  expect(textRuns(h1)[0].text).toBe("The visual editor you're");
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("rejects every Change: sends no ids, leaves the scene graph unchanged and clears the Proposal", async () => {
+  const { fake, session, proposal } = await withProposal();
+  const rootsBefore = session.getState().roots;
+  session.getState().applyProposal([]);
+  expect(fake.received.at(-1)).toEqual({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds: [] });
+  await wire();
+  expect(session.getState().roots).toBe(rootsBefore);
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("keeps the Proposal and the scene graph and holds the extension's message when it refuses to apply a Change", async () => {
+  const button = byName("button");
+  // A Proposal that also restyles the hero's Read-only spread-props button.
+  const fake = fakeExtension(hero, {
+    propose: (p) => ({ ...p, changes: [...p.changes, { id: `${p.id}:button`, kind: "style", nodeId: button.id, property: "width", before: "15rem", after: "20rem" }] }),
+  });
+  const { session, proposal } = await withProposal(fake);
+  const rootsBefore = session.getState().roots;
+  session.getState().applyProposal(proposal.changes.map((c) => c.id));
+  await wire();
+  expect(session.getState().lastError).toEqual(expect.stringContaining("Read-only"));
+  expect(session.getState().proposal).toEqual(proposal);
+  expect(session.getState().roots).toBe(rootsBefore);
+});
+
+it("sends nothing when no Proposal is pending", () => {
+  const fake = fakeExtension(hero);
+  createSession(fake.link).getState().applyProposal(["anything"]);
+  expect(fake.received).toEqual([]);
+});
+
+it("drops a held source file once an Edit changes that file, so Code view reads it again", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  session.getState().readSource(hero.file);
+  await wire();
+  expect(Object.keys(session.getState().sources)).toEqual([hero.file]);
+  session.getState().applyEdit(byName("h1").id, { color: "#111827" });
+  await wire();
+  expect(session.getState().sources).toEqual({});
+});
+
+it("shows the extension's error when a Proposal can't be made, and stops streaming", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  fake.emit({ type: "intent:proposal.partial", proposalId: "p", partial: "Asking…" });
+  fake.emit({ type: "intent:error", proposalId: "p", message: "NEBIUS_API_KEY is not set on the Clairity server" });
+  expect(session.getState()).toMatchObject({ streaming: "", lastError: "NEBIUS_API_KEY is not set on the Clairity server" });
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("holds the project's dev server address from the extension's session:ready, for the Live view", () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  expect(session.getState().devServerUrl).toBeUndefined();
+  fake.emit({ type: "session:ready", sessionId: "s", devServerUrl: "http://localhost:3000" });
+  expect(session.getState().devServerUrl).toBe("http://localhost:3000");
 });

@@ -177,6 +177,9 @@ importers:
       '@babel/types':
         specifier: ^8.0.6
         version: 8.0.6
+      parser:
+        specifier: workspace:*
+        version: link:../parser
       recast:
         specifier: ^0.24.0
         version: 0.24.0
@@ -276,12 +279,18 @@ importers:
       '@types/ws':
         specifier: ^8.18.2
         version: 8.18.2
+      parser:
+        specifier: workspace:*
+        version: link:../parser
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@26.6.5)(vite@8.3.4(@types/node@26.6.5)(jiti@2.7.0))
 
   packages/shared:
     devDependencies:
