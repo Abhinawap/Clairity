@@ -15,6 +15,9 @@ export type GraphPatch = {
   file: string;
   nodes: IRNode[];
   changedNodeIds: string[];
+  // The file's whole scene graph, and whether any node's id changed: then the caller sends graph:full.
+  roots: IRNode[];
+  idsChanged: boolean;
 };
 
 type PatchHandler = (patch: GraphPatch) => void;
@@ -61,8 +64,13 @@ export class SceneGraphWatcher {
     this.cache.set(filePath, nodes);
   }
 
+  /** The scene graph last parsed for a file, for a page-scoped Proposal. */
+  rootsOf(filePath: string): IRNode[] | undefined {
+    return this.cache.get(filePath);
+  }
+
   // Scans every watched file's cached tree for a node id. Used to resolve edit:apply/text:apply,
-  // which only carry a nodeId, into the file + location diffApplier needs.
+  // which only carry a nodeId, into the node and file an edit needs.
   findNode(nodeId: string): { file: string; node: IRNode } | undefined {
     for (const [file, nodes] of this.cache) {
       const node = flattenById(nodes).get(nodeId);
@@ -72,7 +80,7 @@ export class SceneGraphWatcher {
   }
 
   // Re-parses and diffs immediately, bypassing the debounce. Call after writing a file yourself
-  // (e.g. from diffApplier) once suppressNextChange has been set, so the resulting patch goes out
+  // (an applied Edit) once suppressNextChange has been set, so the resulting patch goes out
   // right away instead of waiting on the filesystem watcher's own (suppressed) change event.
   reparseNow(filePath: string): void {
     const pending = this.debounceTimers.get(filePath);
@@ -113,11 +121,14 @@ export class SceneGraphWatcher {
       }
     }
 
+    // Ids hash each node's position, so an edit that shifts a node (a longer className before it on the same line)
+    // gives it a new id. A patch can't pair those, so the caller sends graph:full instead (ADR 0001).
+    const idsChanged = previous.size !== current.size || [...current.keys()].some((id) => !previous.has(id));
     this.cache.set(filePath, nodes);
     this.output.appendLine(
       `[clairity] re-parsed ${filePath}: ${nodes.length} root node(s), ${changedNodeIds.length} new/changed id(s)`
     );
-    this.onPatch({ file: filePath, nodes: changedNodes, changedNodeIds });
+    this.onPatch({ file: filePath, nodes: changedNodes, changedNodeIds, roots: nodes, idsChanged });
   }
 
   dispose(): void {
