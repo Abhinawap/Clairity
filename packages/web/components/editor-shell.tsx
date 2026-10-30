@@ -8,7 +8,7 @@ import { Inspector } from "./inspector";
 import { LayerTree } from "./layer-tree";
 import { TopBar, type View } from "./top-bar";
 
-export function EditorShell({ sources = {} }: { sources?: Record<string, string> }) {
+export function EditorShell() {
   const [view, setView] = useState<View>("visual");
   return (
     <Tooltip.Provider delayDuration={300}>
@@ -18,7 +18,7 @@ export function EditorShell({ sources = {} }: { sources?: Record<string, string>
           <LayerTree />
         </aside>
         <main className="flex min-h-0 flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-          {view === "visual" ? <CanvasPreview /> : <CodeView sources={sources} />}
+          {view === "visual" ? <CanvasPreview /> : <CodeView />}
         </main>
         <aside aria-label="Inspector and AI" className="flex min-h-0 flex-col border-l border-zinc-200 dark:border-zinc-800">
           <div className="min-h-0 flex-1 overflow-auto">

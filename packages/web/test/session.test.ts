@@ -1,20 +1,21 @@
 import { readFileSync } from "node:fs";
-import { type IRNode, parseFile } from "parser";
+import type { IRNode } from "parser";
 import { expect, it } from "vitest";
 import { fakeExtension } from "../data/fake-extension";
+import { loadHeroFixture } from "../data/hero-fixture";
 import type { ProtocolMessage } from "../data/protocol";
 import { createSession, findNode, selectedNode, textRuns } from "../data/session";
 
-const code = readFileSync(new URL("../../parser/test/fixtures/hero.tsx", import.meta.url), "utf8");
+const hero = loadHeroFixture();
 // The hero's scene graph, written out: packages/parser/test/parse.test.ts.
-const roots = parseFile(code, "components/hero.tsx");
+const { roots } = hero;
 const all = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...all(n.children)]);
 const byName = (name: string) => all(roots).find((n) => n.name === name)!;
 // The fake replies on a later tick, like a real wire.
 const wire = () => new Promise((resolve) => setTimeout(resolve));
 
 it("holds the fake's scene graph, Read-only nodes and their reasons included", () => {
-  const session = createSession(fakeExtension(roots).link);
+  const session = createSession(fakeExtension(hero).link);
   const { roots: held } = session.getState();
   expect(held).toEqual(roots);
   const readOnly = all(held).filter((n) => !n.editable);
@@ -23,11 +24,11 @@ it("holds the fake's scene graph, Read-only nodes and their reasons included", (
 });
 
 it("reports itself connected to the fake", () => {
-  expect(createSession(fakeExtension(roots).link).getState().connection).toBe("connected");
+  expect(createSession(fakeExtension(hero).link).getState().connection).toBe("connected");
 });
 
 it("ignores messages meant for the extension and unknown types", () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   const before = session.getState();
   fake.emit({ type: "edit:apply", nodeId: roots[0].id, style: { width: "1px" } });
@@ -37,7 +38,7 @@ it("ignores messages meant for the extension and unknown types", () => {
 });
 
 it("selects a Node without sending anything to the extension", () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   session.getState().select(byName("h1").id);
   expect(selectedNode(session.getState())).toEqual(byName("h1"));
@@ -45,7 +46,7 @@ it("selects a Node without sending anything to the extension", () => {
 });
 
 it("sends one Edit carrying every property, and shows it only once the extension confirms it", async () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   const image = byName("Image");
   session.getState().applyEdit(image.id, { width: "2.5rem", height: "2.5rem" });
@@ -56,7 +57,7 @@ it("sends one Edit carrying every property, and shows it only once the extension
 });
 
 it("sends nothing for an Edit on a Read-only node or an id not in the scene graph", async () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   const before = session.getState();
   session.getState().applyEdit(byName("button").id, { width: "1rem" });
@@ -67,7 +68,7 @@ it("sends nothing for an Edit on a Read-only node or an id not in the scene grap
 });
 
 it("keeps the edited Node selected, children included, after the extension confirms the Edit", async () => {
-  const session = createSession(fakeExtension(roots).link);
+  const session = createSession(fakeExtension(hero).link);
   const h1 = byName("h1");
   session.getState().select(h1.id);
   session.getState().applyEdit(h1.id, { color: "#111827" });
@@ -87,7 +88,7 @@ it("lists a Node's own text runs, or a text run itself", () => {
 });
 
 it("sends one text Edit for a text run, and shows the new text only once the extension confirms it", async () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   const [builder, looking] = textRuns(byName("h1"));
   session.getState().applyText(looking.id, "searching for");
@@ -103,7 +104,7 @@ it("sends nothing for a text Edit on an id that is not a text run, a Read-only t
   const rootsWithReadOnlyStart = structuredClone(roots);
   const [start] = textRuns(findNode(rootsWithReadOnlyStart, byName("a").id));
   start.editable = false;
-  const fake = fakeExtension(rootsWithReadOnlyStart);
+  const fake = fakeExtension({ ...hero, roots: rootsWithReadOnlyStart });
   const session = createSession(fake.link);
   const before = session.getState();
   for (const id of [byName("h1").id, start.id, "components/hero.tsx:999:1:nope"]) session.getState().applyText(id, "Nothing");
@@ -113,7 +114,7 @@ it("sends nothing for a text Edit on an id that is not a text run, a Read-only t
 });
 
 it("keeps a Read-only element's text runs editable, and the element selected once the extension confirms one", async () => {
-  const fake = fakeExtension(roots);
+  const fake = fakeExtension(hero);
   const session = createSession(fake.link);
   const button = byName("button");
   const [learnMore] = textRuns(button);
@@ -123,4 +124,22 @@ it("keeps a Read-only element's text runs editable, and the element selected onc
   await wire();
   expect(selectedNode(session.getState())?.id).toBe(button.id);
   expect(textRuns(selectedNode(session.getState()))[0].text).toBe("Learn Less");
+});
+
+it("reads a Node's source file: sends source:read for its path, and holds the fake's source:content under that path", async () => {
+  const fake = fakeExtension(hero);
+  const session = createSession(fake.link);
+  const { file } = byName("h1").source;
+  session.getState().readSource(file);
+  expect(fake.received).toEqual([{ type: "source:read", file }]);
+  expect(session.getState().sources).toEqual({});
+  await wire();
+  expect(session.getState().sources).toEqual({ [file]: readFileSync(new URL("../../parser/test/fixtures/hero.tsx", import.meta.url), "utf8") });
+});
+
+it("holds nothing for a file the fake does not serve", async () => {
+  const session = createSession(fakeExtension(hero).link);
+  session.getState().readSource("components/missing.tsx");
+  await wire();
+  expect(session.getState().sources).toEqual({});
 });
