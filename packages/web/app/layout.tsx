@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-plus-jakarta-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Clairity",
@@ -11,11 +18,11 @@ const themeScript = `if (localStorage.theme === "dark" || (!localStorage.theme &
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
+    <html lang="en" className={`h-full antialiased ${plusJakartaSans.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-full bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">{children}</body>
+      <body className="h-full font-sans bg-[#F2FBF9] text-[#172A3A] dark:bg-[#172A3A] dark:text-[#F2FBF9]">{children}</body>
     </html>
   );
 }

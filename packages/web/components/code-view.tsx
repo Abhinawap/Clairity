@@ -17,14 +17,14 @@ export function CodeView({ sources }: { sources: Record<string, string> }) {
   }, [node?.id]);
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-zinc-950">
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-zinc-200 px-3 text-xs dark:border-zinc-800">
-        <FileCode2 className="size-3.5 text-zinc-400" aria-hidden />
-        <span className="font-mono font-medium">{file ?? "No file"}</span>
-        <span className="text-zinc-400">· {lines.length} lines</span>
+    <div className="flex h-full flex-col bg-white dark:bg-[#172A3A]">
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-[#DAF5EE] px-3 text-xs dark:border-[#004346]">
+        <FileCode2 className="size-3.5 text-[#004346]/60 dark:text-[#DAF5EE]/60" aria-hidden />
+        <span className="font-mono font-medium text-[#172A3A] dark:text-[#F2FBF9]">{file ?? "No file"}</span>
+        <span className="text-[#004346]/50 dark:text-[#DAF5EE]/50">· {lines.length} lines</span>
         {node && (
           <span className="ml-auto flex items-center gap-2 font-mono">
-            <span className="rounded bg-blue-50 px-1.5 py-0.5 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+            <span className="rounded bg-[#DAF5EE] px-1.5 py-0.5 text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">
               {node.type === "text" ? "#text" : `<${node.name}>`} L{node.source.line}:{node.source.column}→L{node.source.endLine}:{node.source.endColumn}
             </span>
             {!node.editable && (
@@ -46,16 +46,16 @@ export function CodeView({ sources }: { sources: Record<string, string> }) {
                   key={line}
                   ref={hit && line === node.source.line ? firstHighlighted : undefined}
                   data-highlighted={hit || undefined}
-                  className={hit ? "bg-blue-50/90 dark:bg-blue-950/60" : "hover:bg-zinc-50 dark:hover:bg-zinc-900/50"}
+                  className={hit ? "bg-[#DAF5EE]/60 dark:bg-[#004346]/40" : "hover:bg-[#F2FBF9] dark:hover:bg-[#004346]/20"}
                 >
                   <td
                     className={`w-12 select-none border-l-2 pr-3 text-right text-[11px] ${
-                      hit ? "border-blue-500 font-semibold text-blue-600 dark:text-blue-400" : "border-transparent text-zinc-400 dark:text-zinc-600"
+                      hit ? "border-[#09BC8A] font-semibold text-[#004346] dark:text-[#09BC8A]" : "border-transparent text-[#004346]/40 dark:text-[#DAF5EE]/40"
                     }`}
                   >
                     {line}
                   </td>
-                  <td className="whitespace-pre pr-4 text-zinc-800 dark:text-zinc-200">{text || " "}</td>
+                  <td className="whitespace-pre pr-4 text-[#172A3A] dark:text-[#F2FBF9]">{text || " "}</td>
                 </tr>
               );
             })}

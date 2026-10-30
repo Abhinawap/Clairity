@@ -12,15 +12,15 @@ export function EditorShell({ sources = {} }: { sources?: Record<string, string>
   const [view, setView] = useState<View>("visual");
   return (
     <Tooltip.Provider delayDuration={300}>
-      <div className="grid h-full grid-cols-[240px_1fr_320px] grid-rows-[auto_1fr] text-sm">
+      <div className="grid h-full grid-cols-[240px_1fr_320px] grid-rows-[auto_1fr] text-sm bg-[#F2FBF9] text-[#172A3A] dark:bg-[#172A3A] dark:text-[#F2FBF9]">
         <TopBar view={view} onViewChange={setView} />
-        <aside aria-label="Layers" className="overflow-auto border-r border-zinc-200 dark:border-zinc-800">
+        <aside aria-label="Layers" className="overflow-auto border-r border-[#DAF5EE] bg-white dark:border-[#004346] dark:bg-[#172A3A]">
           <LayerTree />
         </aside>
-        <main className="flex min-h-0 flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-900">
+        <main className="flex min-h-0 flex-col overflow-hidden bg-[#F2FBF9] dark:bg-[#172A3A]/90">
           {view === "visual" ? <CanvasPreview /> : <CodeView sources={sources} />}
         </main>
-        <aside aria-label="Inspector and AI" className="flex min-h-0 flex-col border-l border-zinc-200 dark:border-zinc-800">
+        <aside aria-label="Inspector and AI" className="flex min-h-0 flex-col border-l border-[#DAF5EE] bg-white dark:border-[#004346] dark:bg-[#172A3A]">
           <div className="min-h-0 flex-1 overflow-auto">
             <Inspector />
           </div>

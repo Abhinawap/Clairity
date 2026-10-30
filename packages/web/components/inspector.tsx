@@ -11,7 +11,7 @@ type Style = IRNode["style"];
 type StringProp = Exclude<keyof Style, "padding" | "margin">;
 const SIDES = ["top", "right", "bottom", "left"] as const;
 const DISPLAYS = ["block", "flex", "inline-flex", "grid"] as const;
-const SWATCHES = ["#09090b", "#2563eb", "#7c3aed", "#dc2626", "#16a34a", "#f8fafc"] as const;
+const SWATCHES = ["#172A3A", "#004346", "#09BC8A", "#DAF5EE", "#F2FBF9"] as const;
 // Preflight zeroes padding and margin, so a side never set is 0.
 const ZERO_BOX = { top: "0", right: "0", bottom: "0", left: "0" };
 
@@ -22,9 +22,9 @@ export function Inspector() {
 
   if (!node)
     return (
-      <div className="grid h-full place-items-center p-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="grid h-full place-items-center p-6 text-center text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70">
         <div className="space-y-2">
-          <MousePointerClick className="mx-auto size-6" aria-hidden />
+          <MousePointerClick className="mx-auto size-6 text-[#09BC8A]" aria-hidden />
           <p>Select a layer on the canvas or in the layer tree.</p>
         </div>
       </div>
@@ -69,18 +69,18 @@ export function Inspector() {
 
   return (
     <div className="pb-4">
-      <header className="space-y-1.5 border-b border-zinc-200 p-3 dark:border-zinc-800">
+      <header className="space-y-1.5 border-b border-[#DAF5EE] p-3 dark:border-[#004346]">
         <p className="flex items-center gap-2">
-          <span className="font-mono text-sm font-medium">{node.type === "text" ? "Text run" : node.name}</span>
-          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">{node.type}</span>
-          <span className="ml-auto font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span className="font-mono text-sm font-medium text-[#172A3A] dark:text-[#F2FBF9]">{node.type === "text" ? "Text run" : node.name}</span>
+          <span className="rounded bg-[#DAF5EE] px-1.5 py-0.5 text-[10px] uppercase font-semibold text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">{node.type}</span>
+          <span className="ml-auto font-mono text-[11px] text-[#004346]/60 dark:text-[#DAF5EE]/60">
             {node.source.file}:{node.source.line}
           </span>
         </p>
         {propEntries.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-0.5">
             {propEntries.map(([k, v]) => (
-              <span key={k} className="rounded bg-violet-50 px-1.5 py-0.5 font-mono text-[10px] text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+              <span key={k} className="rounded bg-[#DAF5EE] px-1.5 py-0.5 font-mono text-[10px] text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">
                 {v === true ? k : `${k}=${JSON.stringify(v)}`}
               </span>
             ))}
@@ -88,9 +88,9 @@ export function Inspector() {
         )}
         {passthrough.length > 0 && (
           <div className="flex flex-wrap items-center gap-1 pt-0.5" aria-label="Passthrough classes">
-            <span className="text-[10px] text-zinc-400">Passthrough:</span>
+            <span className="text-[10px] text-[#004346]/60 dark:text-[#DAF5EE]/60">Passthrough:</span>
             {passthrough.map((cls) => (
-              <span key={cls} className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              <span key={cls} className="rounded bg-[#F2FBF9] px-1.5 py-0.5 font-mono text-[10px] text-[#004346] dark:bg-[#004346]/50 dark:text-[#DAF5EE]">
                 {cls}
               </span>
             ))}
@@ -115,8 +115,8 @@ export function Inspector() {
               {field("height", "Height", { compact: true, placeholder: "auto" })}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-11 shrink-0 text-xs text-zinc-500 dark:text-zinc-400">Display</span>
-              <div className="grid flex-1 grid-cols-4 gap-1 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800">
+              <span className="w-11 shrink-0 text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70">Display</span>
+              <div className="grid flex-1 grid-cols-4 gap-1 rounded-md bg-[#DAF5EE]/50 p-0.5 dark:bg-[#004346]/40">
                 {DISPLAYS.map((d) => {
                   const active = node.style.display === d;
                   return (
@@ -126,8 +126,8 @@ export function Inspector() {
                       disabled={disabled}
                       onClick={() => edit({ display: d })}
                       aria-pressed={active}
-                      className={`cursor-pointer truncate rounded px-1 py-0.5 font-mono text-[10px] disabled:cursor-not-allowed disabled:opacity-50 ${
-                        active ? "bg-white text-zinc-900 shadow-xs dark:bg-zinc-950 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400"
+                      className={`cursor-pointer truncate rounded px-1 py-0.5 font-mono text-[10px] disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${
+                        active ? "bg-white text-[#172A3A] shadow-xs dark:bg-[#004346] dark:text-[#F2FBF9]" : "text-[#004346]/70 hover:text-[#172A3A] dark:text-[#DAF5EE]/70 dark:hover:text-[#F2FBF9]"
                       }`}
                     >
                       {d === "inline-flex" ? "in-flex" : d}
@@ -196,7 +196,7 @@ function Swatches({ disabled, onPick }: { disabled?: boolean; onPick(hex: string
           aria-label={`Apply ${hex}`}
           onClick={() => onPick(hex)}
           style={{ backgroundColor: hex }}
-          className="size-4 cursor-pointer rounded-full border border-zinc-300 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700"
+          className="size-4 cursor-pointer rounded-full border border-[#004346]/30 disabled:cursor-not-allowed disabled:opacity-40 hover:scale-110 transition-transform"
         />
       ))}
     </div>
@@ -205,8 +205,8 @@ function Swatches({ disabled, onPick }: { disabled?: boolean; onPick(hex: string
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <Collapsible.Root defaultOpen className="border-b border-zinc-200 px-3 py-2 dark:border-zinc-800">
-      <Collapsible.Trigger className="group flex w-full cursor-pointer items-center gap-1 rounded py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 focus-visible:outline-2 focus-visible:outline-blue-500 dark:text-zinc-400">
+    <Collapsible.Root defaultOpen className="border-b border-[#DAF5EE] px-3 py-2 dark:border-[#004346]">
+      <Collapsible.Trigger className="group flex w-full cursor-pointer items-center gap-1 rounded py-1 text-xs font-semibold uppercase tracking-wide text-[#004346]/80 focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#DAF5EE]/80">
         <ChevronRight className="size-3.5 transition-transform group-data-[state=open]:rotate-90" aria-hidden />
         {title}
       </Collapsible.Trigger>

@@ -1,6 +1,7 @@
 "use client";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { ToggleGroup } from "radix-ui";
 import { useSession } from "../data/session-provider";
 import { ThemeToggle } from "./theme-toggle";
@@ -11,26 +12,43 @@ export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: 
   const file = useSession((s) => s.roots[0]?.source.file);
   const connection = useSession((s) => s.connection);
   return (
-    <header className="col-span-3 flex h-11 items-center gap-3 border-b border-zinc-200 px-3 dark:border-zinc-800">
+    <header className="col-span-3 flex h-11 items-center gap-3 border-b border-[#DAF5EE] bg-white px-3 dark:border-[#004346] dark:bg-[#172A3A]">
       <Link
         href="/"
         aria-label="Back to projects"
-        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-2 focus-visible:outline-blue-500 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-[#004346] hover:bg-[#DAF5EE] hover:text-[#172A3A] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#DAF5EE] dark:hover:bg-[#004346] dark:hover:text-[#F2FBF9]"
       >
         <ArrowLeft className="size-3.5" aria-hidden />
         <span>Projects</span>
       </Link>
-      <span className="text-zinc-300 dark:text-zinc-700" aria-hidden>/</span>
-      <span className="font-semibold">Clairity</span>
-      {file && <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">{file}</span>}
-      <span className="ml-auto flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400" role="status">
+      <span className="text-[#DAF5EE] dark:text-[#004346]" aria-hidden>/</span>
+      <Link href="/" className="inline-flex items-center focus-visible:outline-2 focus-visible:outline-[#09BC8A]">
+        <Image
+          src="/logos/Clairity_Black.svg"
+          alt="Clairity"
+          width={88}
+          height={18}
+          priority
+          className="h-4.5 w-auto dark:hidden"
+        />
+        <Image
+          src="/logos/Clairity_White.svg"
+          alt="Clairity"
+          width={88}
+          height={18}
+          priority
+          className="hidden h-4.5 w-auto dark:block"
+        />
+      </Link>
+      {file && <span className="font-mono text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70">{file}</span>}
+      <span className="ml-auto flex items-center gap-1.5 text-xs text-[#004346] dark:text-[#DAF5EE]" role="status">
         <span
           aria-hidden
-          className={`size-2 rounded-full ${connection === "connected" ? "bg-emerald-500" : "animate-pulse bg-amber-500"}`}
+          className={`size-2 rounded-full ${connection === "connected" ? "bg-[#09BC8A]" : "animate-pulse bg-amber-500"}`}
         />
         {connection === "connected" ? "Connected" : "Connecting…"}
         {/* shortcut: always the fake until the broker connection exists (web-data-layer slice 7) */}
-        <span className="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">Fake extension</span>
+        <span className="rounded bg-[#DAF5EE] px-1.5 py-0.5 text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">Fake extension</span>
       </span>
       <ToggleGroup.Root
         type="single"
@@ -38,18 +56,42 @@ export function TopBar({ view, onViewChange }: { view: View; onViewChange(view: 
         // Radix sends "" when the active item is clicked again; keep the current view instead.
         onValueChange={(v) => v && onViewChange(v as View)}
         aria-label="Canvas view"
-        className="flex rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800"
+        className="flex rounded-md bg-[#DAF5EE]/50 p-0.5 dark:bg-[#004346]/40"
       >
         {(["visual", "code"] as const).map((v) => (
           <ToggleGroup.Item
             key={v}
             value={v}
-            className="rounded px-2.5 py-1 text-xs capitalize text-zinc-600 focus-visible:outline-2 focus-visible:outline-blue-500 data-[state=on]:bg-white data-[state=on]:text-zinc-900 data-[state=on]:shadow-sm dark:text-zinc-400 dark:data-[state=on]:bg-zinc-950 dark:data-[state=on]:text-zinc-100"
+            className="rounded px-2.5 py-1 text-xs capitalize text-[#004346]/80 focus-visible:outline-2 focus-visible:outline-[#09BC8A] data-[state=on]:bg-white data-[state=on]:text-[#172A3A] data-[state=on]:shadow-xs dark:text-[#DAF5EE]/80 dark:data-[state=on]:bg-[#004346] dark:data-[state=on]:text-[#F2FBF9]"
           >
             {v}
           </ToggleGroup.Item>
         ))}
       </ToggleGroup.Root>
+      <a
+        href="https://github.com/Abhinawap/Clairity"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="GitHub repository"
+        className="grid size-8 place-items-center rounded-md text-[#004346] hover:bg-[#DAF5EE] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#DAF5EE] dark:hover:bg-[#004346]"
+      >
+        <Image
+          src="/logos/GitHub_Invertocat_Black.svg"
+          alt=""
+          width={16}
+          height={16}
+          className="size-4 dark:hidden"
+          aria-hidden
+        />
+        <Image
+          src="/logos/GitHub_Invertocat_White.svg"
+          alt=""
+          width={16}
+          height={16}
+          className="hidden size-4 dark:block"
+          aria-hidden
+        />
+      </a>
       <ThemeToggle />
     </header>
   );
