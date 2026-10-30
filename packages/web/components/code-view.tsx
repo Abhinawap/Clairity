@@ -4,17 +4,23 @@ import { useEffect, useRef } from "react";
 import { useSession } from "../data/session-provider";
 import { selectedNode } from "../data/session";
 
-// shortcut: reads the server-passed fixture map until source:read lands in the data layer (web-data-layer slice 3)
-export function CodeView({ sources }: { sources: Record<string, string> }) {
+export function CodeView() {
   const node = useSession(selectedNode);
   const rootFile = useSession((s) => s.roots[0]?.source.file);
   const file = node?.source.file ?? rootFile;
-  const lines = (file ? sources[file] : undefined)?.replace(/\r\n/g, "\n").split("\n") ?? [];
+  const content = useSession((s) => (file ? s.sources[file] : undefined));
+  const readSource = useSession((s) => s.readSource);
+  const lines = content?.replace(/\r\n/g, "\n").split("\n") ?? [];
   const firstHighlighted = useRef<HTMLTableRowElement>(null);
+
+  // Asks the extension for a file the store doesn't hold yet; it lands in the store and this view re-renders.
+  useEffect(() => {
+    if (file && content === undefined) readSource(file);
+  }, [file, content, readSource]);
 
   useEffect(() => {
     firstHighlighted.current?.scrollIntoView({ block: "center" });
-  }, [node?.id]);
+  }, [node?.id, content]);
 
   return (
     <div className="flex h-full flex-col bg-white dark:bg-zinc-950">

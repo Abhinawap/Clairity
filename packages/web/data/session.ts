@@ -14,6 +14,8 @@ export type SessionState = {
   roots: IRNode[];
   connection: Connection;
   selectedId?: string;
+  // Source files by path, as the extension last sent them (see readSource).
+  sources: Record<string, string>;
   // Selection is local state: it sends nothing to the extension.
   select(id: string): void;
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
@@ -23,6 +25,8 @@ export type SessionState = {
   // An id that is not a text run, a Read-only text run, or an id not in the scene graph sends nothing.
   // An element's Read-only flag covers only its style, so its text runs stay editable.
   applyText(runId: string, text: string): void;
+  // Asks the extension for a file, such as the selected Node's `source.file`; its contents land in `sources` under that path.
+  readSource(file: string): void;
 };
 
 const flatten = (nodes: IRNode[]): IRNode[] => nodes.flatMap((n) => [n, ...flatten(n.children)]);
@@ -49,6 +53,8 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
         ...state,
         roots: message.changedNodeIds.reduce((roots, oldId, i) => replaceNode(roots, oldId, message.nodes[i]), state.roots),
       };
+    case "source:content":
+      return { ...state, sources: { ...state.sources, [message.file]: message.content } };
     default:
       return state;
   }
@@ -58,6 +64,7 @@ export function createSession(link: ExtensionLink) {
   const session = createStore<SessionState>()((set, get) => ({
     roots: [],
     connection: "connecting",
+    sources: {},
     select: (id) => set({ selectedId: id }),
     applyEdit(nodeId, style) {
       if (findNode(get().roots, nodeId)?.editable) link.send({ type: "edit:apply", nodeId, style });
@@ -66,6 +73,7 @@ export function createSession(link: ExtensionLink) {
       const run = findNode(get().roots, runId);
       if (run?.type === "text" && run.editable) link.send({ type: "text:apply", nodeId: runId, text });
     },
+    readSource: (file) => link.send({ type: "source:read", file }),
   }));
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),

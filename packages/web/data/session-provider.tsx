@@ -1,14 +1,13 @@
 "use client";
-import type { IRNode } from "parser";
 import { createContext, type ReactNode, use, useState } from "react";
 import { useStore } from "zustand";
-import { fakeExtension } from "./fake-extension";
+import { type Fixture, fakeExtension } from "./fake-extension";
 import { createSession, type SessionState } from "./session";
 
 const SessionContext = createContext<ReturnType<typeof createSession> | null>(null);
 
 // Creates the session for every component under it. Fake or real is chosen here: until the broker connection exists, only the fake runs.
-export function SessionProvider({ fixture, children }: { fixture: IRNode[]; children: ReactNode }) {
+export function SessionProvider({ fixture, children }: { fixture: Fixture; children: ReactNode }) {
   const [session] = useState(() => createSession(fakeExtension(fixture).link));
   return <SessionContext value={session}>{children}</SessionContext>;
 }
