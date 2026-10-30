@@ -1,0 +1,32 @@
+# Runs the Clairity server and web app on one Nebius AI Cloud VM. See docs/DEMO.md.
+#   cp deploy/.env.example deploy/.env   # then fill in NEBIUS_API_KEY and PUBLIC_HOST
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+services:
+  server:
+    build:
+      context: ..
+      dockerfile: deploy/server.Dockerfile
+    environment:
+      NEBIUS_API_KEY: ${NEBIUS_API_KEY:?set NEBIUS_API_KEY in deploy/.env}
+      TOKEN_FACTORY_BASE_URL: ${TOKEN_FACTORY_BASE_URL:-https://api.tokenfactory.nebius.com/v1}
+      TOKEN_FACTORY_MODEL: ${TOKEN_FACTORY_MODEL:-nvidia/nemotron-3-super-120b-a12b}
+    ports:
+      - "8787:8787"
+    volumes:
+      - clairity-data:/data
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        NEXT_PUBLIC_BROKER_URL: ws://${PUBLIC_HOST:?set PUBLIC_HOST in deploy/.env}:8787
+    ports:
+      - "3100:3100"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  clairity-data:
