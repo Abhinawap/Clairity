@@ -1,62 +1,15 @@
 "use client";
 import { AlertTriangle, Check, CheckCircle2, Loader2, Send, Sparkles, Square, X } from "lucide-react";
-import type { IRNode } from "parser";
 import { useEffect, useRef, useState } from "react";
-import type { Change, Proposal } from "../data/proposal";
+import type { Change } from "../data/proposal";
 import type { AgentStepMessage } from "../data/protocol";
 import { useSession } from "../data/session-provider";
-import { selectedNode, textRuns } from "../data/session";
+import { selectedNode } from "../data/session";
 
 const DEMO_PROMPTS = [
   { label: "Premium hero", scope: "node" as const, prompt: "Make this hero more premium and cinematic" },
   { label: "Mobile responsive (Agent)", scope: "page" as const, prompt: "Make the page responsive for mobile" },
 ];
-
-function buildProposal(prompt: string, scope: "node" | "page", target: IRNode | undefined): Proposal {
-  const nodeId = target?.id ?? "root";
-  const runs = textRuns(target);
-  const changes: (Change & { id: string })[] = [
-    {
-      id: "c_1",
-      kind: "style",
-      nodeId,
-      property: "color",
-      before: target?.style.color,
-      after: "#1e3a8a",
-    },
-    {
-      id: "c_2",
-      kind: "style",
-      nodeId,
-      property: "fontSize",
-      before: target?.style.fontSize,
-      after: "3.5rem",
-    },
-  ];
-  if (runs[0]) {
-    changes.push({
-      id: "c_3",
-      kind: "text",
-      nodeId: runs[0].id,
-      before: runs[0].text,
-      after: "The visual frontend tool you're",
-    });
-  }
-  changes.push({
-    id: "c_4",
-    kind: "class",
-    nodeId,
-    added: ["tracking-tight", "sm:text-5xl"],
-    removed: [],
-  });
-  return {
-    id: "prop_1",
-    intent: prompt,
-    scope,
-    reasoning: "Refined typography hierarchy, tightened letter-spacing, and updated hero copy for a more editorial feel.",
-    changes,
-  };
-}
 
 function describeChange(c: Change) {
   switch (c.kind) {
@@ -73,18 +26,23 @@ function describeChange(c: Change) {
   }
 }
 
-// shortcut: drives streaming Proposals and the build-fix-render loop from local timers until slices 5–6 land in data/
+// shortcut: the build-fix-render log is scripted on local timers (v2, out of the data layer's scope); its Proposal still comes through the store
 export function AiPanel() {
   const selected = useSession(selectedNode);
   const root = useSession((s) => s.roots[0]);
-  const applyEdit = useSession((s) => s.applyEdit);
-  const applyText = useSession((s) => s.applyText);
+  const streaming = useSession((s) => s.streaming);
+  const proposal = useSession((s) => s.proposal);
+  const lastError = useSession((s) => s.lastError);
+  const requestProposal = useSession((s) => s.requestProposal);
+  const applyProposal = useSession((s) => s.applyProposal);
 
   const [scope, setScope] = useState<"node" | "page">("node");
   const [prompt, setPrompt] = useState("");
-  const [streaming, setStreaming] = useState<string>();
-  const [proposal, setProposal] = useState<Proposal>();
-  const [accepted, setAccepted] = useState<Set<string>>(new Set());
+  // Changes the developer unticked, per Proposal: a new Proposal starts with every Change accepted.
+  const [unticked, setUnticked] = useState<{ proposalId?: string; ids: Set<string> }>({ ids: new Set() });
+  const accepted = new Set(
+    (proposal?.changes ?? []).filter((c) => unticked.proposalId !== proposal?.id || !unticked.ids.has(c.id)).map((c) => c.id),
+  );
   const [steps, setSteps] = useState<AgentStepMessage[]>([]);
   const [runningAgent, setRunningAgent] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -99,14 +57,12 @@ export function AiPanel() {
     const trimmed = text.trim();
     if (!trimmed) return;
     clearTimers();
-    setProposal(undefined);
-    const target = (selected?.editable ? selected : undefined) ?? root;
-    const built = buildProposal(trimmed, nextScope, target);
+    const target = selected ?? root;
+    const request = () => requestProposal({ scope: nextScope, prompt: trimmed, nodeId: target?.id });
     const isAgent = nextScope === "page" || /responsive|mobile|build/i.test(trimmed);
 
     if (isAgent) {
       setRunningAgent(true);
-      setStreaming(undefined);
       const script: AgentStepMessage[] = [
         { type: "agent:step", step: 1, description: "Inspecting scene graph & proposing responsive layout", status: "running" },
         { type: "agent:step", step: 2, description: "Applying 4 Changes to components/hero.tsx", status: "running" },
@@ -123,8 +79,7 @@ export function AiPanel() {
           ]);
           if (idx === script.length - 1) {
             setRunningAgent(false);
-            setProposal(built);
-            setAccepted(new Set(built.changes.map((c) => c.id)));
+            request();
           }
         }, (idx + 1) * 180);
         timers.current.push(t);
@@ -133,13 +88,7 @@ export function AiPanel() {
     }
 
     setSteps([]);
-    setStreaming(`{"reasoning":"Refining <${target?.name ?? "section"}>…","changes":[`);
-    const t = setTimeout(() => {
-      setStreaming(undefined);
-      setProposal(built);
-      setAccepted(new Set(built.changes.map((c) => c.id)));
-    }, 220);
-    timers.current.push(t);
+    request();
   };
 
   const stopAgent = () => {
@@ -148,21 +97,11 @@ export function AiPanel() {
     setSteps((prev) => prev.map((s) => (s.status === "running" ? { ...s, description: `${s.description} (stopped)`, status: "ok" } : s)));
   };
 
-  const applyChanges = (ids: Set<string>) => {
-    if (!proposal) return;
-    for (const c of proposal.changes) {
-      if (!ids.has(c.id)) continue;
-      if (c.kind === "style") applyEdit(c.nodeId, { [c.property]: c.after });
-      if (c.kind === "text") applyText(c.nodeId, c.after);
-    }
-    setProposal(undefined);
-  };
-
   const toggleChange = (id: string) =>
-    setAccepted((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(id)) next.add(id);
-      return next;
+    setUnticked((prev) => {
+      const ids = new Set(prev.proposalId === proposal?.id ? prev.ids : []);
+      if (!ids.delete(id)) ids.add(id);
+      return { proposalId: proposal?.id, ids };
     });
 
   return (
@@ -275,6 +214,11 @@ export function AiPanel() {
         {proposal && (
           <div className="space-y-2 rounded-md border border-zinc-200 bg-white p-2.5 text-xs dark:border-zinc-800 dark:bg-zinc-950" aria-label="Proposed Changes">
             <p className="text-[11px] text-zinc-600 dark:text-zinc-300">{proposal.reasoning}</p>
+            {lastError && (
+              <p role="alert" className="flex items-start gap-1.5 rounded bg-red-50 px-1.5 py-1 text-[11px] text-red-700 dark:bg-red-950 dark:text-red-300">
+                <AlertTriangle className="mt-0.5 size-3 shrink-0" aria-hidden /> {lastError}
+              </p>
+            )}
             <ul className="space-y-1">
               {proposal.changes.map((c) => {
                 const checked = accepted.has(c.id);
@@ -301,7 +245,7 @@ export function AiPanel() {
             <div className="flex items-center gap-1.5 pt-1">
               <button
                 type="button"
-                onClick={() => applyChanges(new Set(proposal.changes.map((c) => c.id)))}
+                onClick={() => applyProposal(proposal.changes.map((c) => c.id))}
                 className="inline-flex cursor-pointer items-center gap-1 rounded bg-blue-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-blue-500"
               >
                 <Check className="size-3" aria-hidden /> Accept All
@@ -309,14 +253,14 @@ export function AiPanel() {
               <button
                 type="button"
                 disabled={accepted.size === 0}
-                onClick={() => applyChanges(accepted)}
+                onClick={() => applyProposal([...accepted])}
                 className="inline-flex cursor-pointer items-center gap-1 rounded border border-zinc-200 px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
                 Apply ({accepted.size})
               </button>
               <button
                 type="button"
-                onClick={() => setProposal(undefined)}
+                onClick={() => applyProposal([])}
                 className="ml-auto inline-flex cursor-pointer items-center gap-1 rounded px-2 py-1 text-[11px] text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 <X className="size-3" aria-hidden /> Reject

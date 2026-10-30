@@ -183,3 +183,66 @@ it("streams a canned Proposal whose Changes target editable hero Nodes, with at 
     if (c.kind === "text") expect(target?.type).toBe("text");
   }
 });
+
+// A session holding the fake's canned Proposal: style color and fontSize on the h1, and new text on its first run.
+async function withProposal(fake = fakeExtension(hero)) {
+  const session = createSession(fake.link);
+  session.getState().requestProposal({ scope: "node", prompt: "More premium", nodeId: byName("h1").id });
+  await wire();
+  return { fake, session, proposal: session.getState().proposal! };
+}
+const changeId = (proposal: { changes: { id: string }[] }, suffix: string) => proposal.changes.find((c) => c.id.endsWith(suffix))!.id;
+
+it("accepts every Change: sends them all, shows the new style and text after the patch, and clears the Proposal", async () => {
+  const { fake, session, proposal } = await withProposal();
+  const ids = proposal.changes.map((c) => c.id);
+  session.getState().applyProposal(ids);
+  expect(fake.received.at(-1)).toEqual({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds: ids });
+  expect(session.getState().proposal).toEqual(proposal);
+  await wire();
+  const h1 = findNode(session.getState().roots, byName("h1").id)!;
+  expect(h1.style).toMatchObject({ color: "#0f172a", fontSize: "var(--text-6xl)" });
+  expect(textRuns(h1).map((run) => run.text)).toEqual(["The visual editor you're", "looking for"]);
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("accepts a subset: applies only those Changes and leaves Nodes targeted only by rejected Changes alone", async () => {
+  const { session, proposal } = await withProposal();
+  session.getState().applyProposal([changeId(proposal, ":text")]);
+  await wire();
+  const h1 = findNode(session.getState().roots, byName("h1").id)!;
+  expect(h1.style).toEqual(byName("h1").style);
+  expect(textRuns(h1)[0].text).toBe("The visual editor you're");
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("rejects every Change: sends no ids, leaves the scene graph unchanged and clears the Proposal", async () => {
+  const { fake, session, proposal } = await withProposal();
+  const rootsBefore = session.getState().roots;
+  session.getState().applyProposal([]);
+  expect(fake.received.at(-1)).toEqual({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds: [] });
+  await wire();
+  expect(session.getState().roots).toBe(rootsBefore);
+  expect(session.getState().proposal).toBeUndefined();
+});
+
+it("keeps the Proposal and the scene graph and holds the extension's message when it refuses to apply a Change", async () => {
+  const button = byName("button");
+  // A Proposal that also restyles the hero's Read-only spread-props button.
+  const fake = fakeExtension(hero, {
+    propose: (p) => ({ ...p, changes: [...p.changes, { id: `${p.id}:button`, kind: "style", nodeId: button.id, property: "width", before: "15rem", after: "20rem" }] }),
+  });
+  const { session, proposal } = await withProposal(fake);
+  const rootsBefore = session.getState().roots;
+  session.getState().applyProposal(proposal.changes.map((c) => c.id));
+  await wire();
+  expect(session.getState().lastError).toEqual(expect.stringContaining("Read-only"));
+  expect(session.getState().proposal).toEqual(proposal);
+  expect(session.getState().roots).toBe(rootsBefore);
+});
+
+it("sends nothing when no Proposal is pending", () => {
+  const fake = fakeExtension(hero);
+  createSession(fake.link).getState().applyProposal(["anything"]);
+  expect(fake.received).toEqual([]);
+});

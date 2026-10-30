@@ -21,6 +21,8 @@ export type SessionState = {
   streaming: string;
   // The finished Proposal waiting for the developer to accept or reject its Changes.
   proposal?: Proposal;
+  // The extension's message when it refused to apply a Proposal; the Proposal stays so the panel can show both.
+  lastError?: string;
   // Selection is local state: it sends nothing to the extension.
   select(id: string): void;
   // Sends the Edit and changes nothing: the store changes when the extension's patch arrives.
@@ -35,6 +37,9 @@ export type SessionState = {
   // Asks the model for a Proposal, scoped to one Node (the selected Node's id) or to the whole page.
   // Like every action it changes nothing: streaming text and the Proposal arrive as the extension's replies.
   requestProposal(request: { scope: IntentRequestMessage["scope"]; prompt: string; nodeId?: string }): void;
+  // Applies the pending Proposal's accepted Changes: all of their ids, none (reject all) or a chosen subset.
+  // It changes nothing itself: the extension's graph:patch and proposal:applied clear the Proposal. No pending Proposal sends nothing.
+  applyProposal(acceptedChangeIds: string[]): void;
 };
 
 // Every Node in the tree, parents before their children.
@@ -67,7 +72,12 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
     case "intent:proposal.partial":
       return { ...state, streaming: state.streaming + message.partial };
     case "intent:proposal.done":
-      return { ...state, proposal: message.proposal, streaming: "" };
+      return { ...state, proposal: message.proposal, streaming: "", lastError: undefined };
+    // A reply about a Proposal that is no longer pending changes nothing.
+    case "proposal:applied":
+      return state.proposal?.id === message.proposalId ? { ...state, proposal: undefined, lastError: undefined } : state;
+    case "proposal:error":
+      return state.proposal?.id === message.proposalId ? { ...state, lastError: message.message } : state;
     default:
       return state;
   }
@@ -91,6 +101,10 @@ export function createSession(link: ExtensionLink) {
     // ponytail: nodeId is required on the wire, so page scope sends ""; asked Varutieru whether it becomes optional (#12)
     requestProposal: ({ scope, prompt, nodeId = "" }) =>
       link.send({ type: "intent:request", scope, prompt, nodeId: scope === "page" ? "" : nodeId }),
+    applyProposal(acceptedChangeIds) {
+      const { proposal } = get();
+      if (proposal) link.send({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds });
+    },
   }));
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),

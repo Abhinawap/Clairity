@@ -25,12 +25,26 @@ function cannedProposal(graph: IRNode[], request: IntentRequestMessage, id: stri
   };
 }
 
+// Why the fake refuses an accepted Change, or undefined when it can apply it. Kinds other than style and text are the
+// real extension's job, so the fake accepts and skips them.
+function refusal(graph: IRNode[], change: Proposal["changes"][number] | undefined) {
+  if (!change) return "no such Change in this Proposal";
+  if (change.kind !== "style" && change.kind !== "text") return undefined;
+  const node = findNode(graph, change.nodeId);
+  if (!node) return `${change.nodeId} is not in the scene graph`;
+  if (!node.editable) return `${node.name} is Read-only: ${node.reason}`;
+  if (change.kind === "text" && node.type !== "text") return `${node.name} is not a text run`;
+  return undefined;
+}
+
 // In-memory stand-in for the extension side of the protocol. It holds its own copy of the scene graph and never rewrites code.
-export function fakeExtension(fixture: Fixture) {
+// propose: rewrites the canned Proposal before it is sent, so a test can get one the fake will refuse to apply.
+export function fakeExtension(fixture: Fixture, { propose = (proposal: Proposal) => proposal } = {}) {
   const graph = structuredClone(fixture.roots);
   let deliver: (message: ProtocolMessage) => void = () => {};
   const received: ProtocolMessage[] = [];
   let proposals = 0;
+  const sentProposals = new Map<string, Proposal>();
   // Replies arrive on a later tick, like a real wire, so the store keeps the confirmed value until then.
   const reply = (message: ProtocolMessage) => {
     const sent = structuredClone(message);
@@ -52,9 +66,28 @@ export function fakeExtension(fixture: Fixture) {
           return;
         case "intent:request": {
           // Streams the canned Proposal as one partial carrying its raw JSON, then done.
-          const proposal = cannedProposal(graph, message, `proposal-${++proposals}`);
+          const proposal = propose(cannedProposal(graph, message, `proposal-${++proposals}`));
+          sentProposals.set(proposal.id, proposal);
           reply({ type: "intent:proposal.partial", proposalId: proposal.id, partial: JSON.stringify(proposal) });
           reply({ type: "intent:proposal.done", proposal });
+          return;
+        }
+        case "proposal:apply": {
+          // All or nothing, like the real extension per file: one refused Change applies none of them.
+          const changes = message.acceptedChangeIds.map((id) => sentProposals.get(message.proposalId)?.changes.find((c) => c.id === id));
+          const why = changes.map((c) => refusal(graph, c)).find(Boolean);
+          if (why) return reply({ type: "proposal:error", proposalId: message.proposalId, message: why });
+          const changed = new Map<string, IRNode>();
+          for (const c of changes) {
+            if (c?.kind !== "style" && c?.kind !== "text") continue;
+            const node = findNode(graph, c.nodeId)!;
+            if (c.kind === "style") Object.assign(node.style, { [c.property]: c.after });
+            else node.text = c.after;
+            changed.set(node.id, node);
+          }
+          // ponytail: ids stay put because the fake never rewrites code; the real extension's patch pairs old ids with new ones
+          if (changed.size) reply({ type: "graph:patch", changedNodeIds: [...changed.keys()], nodes: [...changed.values()] });
+          reply({ type: "proposal:applied", proposalId: message.proposalId });
           return;
         }
         case "edit:apply":
