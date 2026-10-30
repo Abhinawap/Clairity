@@ -35,8 +35,8 @@ export function LayerTree() {
     });
 
   return (
-    <div className="py-2 bg-[#080C0E] text-[#F2FBF9]">
-      <h2 className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#DAF5EE]/80">Layers</h2>
+    <div className="py-2 bg-white text-[#172A3A] dark:bg-[#080C0E] dark:text-[#F2FBF9] transition-colors">
+      <h2 className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#004346]/80 dark:text-[#DAF5EE]/80">Layers</h2>
       <ul>
         {roots.map((n) => (
           <TreeRow key={n.id} node={n} depth={0} collapsed={collapsed} onToggle={toggle} />
@@ -62,7 +62,11 @@ function TreeRow({ node, depth, collapsed, onToggle }: { node: IRNode; depth: nu
       <div
         ref={row}
         style={{ paddingLeft: depth * 12 + 4 }}
-        className={`flex h-7 items-center gap-1 pr-2 transition-colors ${selected ? "bg-[#004346] text-[#F2FBF9] font-medium" : "hover:bg-[#172A3A]/60"}`}
+        className={`flex h-7 items-center gap-1 pr-2 transition-colors ${
+          selected
+            ? "bg-[#DAF5EE] text-[#004346] font-medium dark:bg-[#004346] dark:text-[#F2FBF9]"
+            : "hover:bg-[#F2FBF9] dark:hover:bg-[#172A3A]/60"
+        }`}
       >
         {node.children.length > 0 ? (
           <button
@@ -70,7 +74,7 @@ function TreeRow({ node, depth, collapsed, onToggle }: { node: IRNode; depth: nu
             onClick={() => onToggle(node.id)}
             aria-label={`${open ? "Collapse" : "Expand"} ${node.name}`}
             aria-expanded={open}
-            className="grid size-5 shrink-0 place-items-center rounded text-[#DAF5EE]/50 hover:text-[#F2FBF9] focus-visible:outline-2 focus-visible:outline-[#09BC8A]"
+            className="grid size-5 shrink-0 place-items-center rounded text-[#004346]/50 hover:text-[#004346] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#DAF5EE]/50 dark:hover:text-[#F2FBF9] transition-colors"
           >
             <ChevronRight className={`size-3.5 transition-transform ${open ? "rotate-90" : ""}`} aria-hidden />
           </button>
@@ -83,18 +87,18 @@ function TreeRow({ node, depth, collapsed, onToggle }: { node: IRNode; depth: nu
           aria-current={selected || undefined}
           className="flex min-w-0 flex-1 items-center gap-1.5 rounded text-left focus-visible:outline-2 focus-visible:outline-[#09BC8A]"
         >
-          <Icon className={`size-3.5 shrink-0 ${node.type === "component" ? "text-[#09BC8A]" : "text-[#DAF5EE]/50"}`} aria-hidden />
-          <span className={`truncate ${node.type === "text" ? "text-[#DAF5EE]/70" : "font-mono text-xs text-[#F2FBF9]"}`}>{label}</span>
+          <Icon className={`size-3.5 shrink-0 ${node.type === "component" ? "text-[#09BC8A]" : "text-[#004346]/50 dark:text-[#DAF5EE]/50"}`} aria-hidden />
+          <span className={`truncate ${node.type === "text" ? "text-[#004346]/70 dark:text-[#DAF5EE]/70" : "font-mono text-xs text-[#172A3A] dark:text-[#F2FBF9]"}`}>{label}</span>
         </button>
         {!node.editable && (
           <Tooltip.Root>
             <Tooltip.Trigger asChild>
-              <span tabIndex={0} aria-label={`Read-only: ${node.reason}`} className="shrink-0 rounded text-amber-400 focus-visible:outline-2 focus-visible:outline-[#09BC8A]">
+              <span tabIndex={0} aria-label={`Read-only: ${node.reason}`} className="shrink-0 rounded text-amber-600 focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-amber-400">
                 <Lock className="size-3" aria-hidden />
               </span>
             </Tooltip.Trigger>
             <Tooltip.Portal>
-              <Tooltip.Content side="right" sideOffset={6} className="max-w-56 rounded-md bg-[#172A3A] px-2 py-1 text-xs text-[#F2FBF9] shadow-md border border-[#004346]">
+              <Tooltip.Content side="right" sideOffset={6} className="max-w-56 rounded-md bg-[#172A3A] px-2 py-1 text-xs text-[#F2FBF9] shadow-md border border-[#004346] dark:bg-[#172A3A] dark:text-[#F2FBF9]">
                 Read-only: {node.reason}
               </Tooltip.Content>
             </Tooltip.Portal>
