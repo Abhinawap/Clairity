@@ -38,10 +38,10 @@ function PreviewNode({ node }: { node: IRNode }) {
       );
     }
     return (
-      <div {...props} className={`${props.className ?? ""} relative flex min-h-8 items-center gap-2 rounded border border-dashed border-[#09BC8A]/40 bg-[#DAF5EE]/40 px-2.5 py-1.5 text-xs text-[#004346] dark:border-[#09BC8A]/40 dark:bg-[#004346]/40 dark:text-[#DAF5EE]`}>
+      <div {...props} className={`${props.className ?? ""} relative flex min-h-8 items-center gap-2 rounded border border-dashed border-[#09BC8A]/50 bg-[#004346]/30 px-2.5 py-1.5 text-xs text-[#DAF5EE]`}>
         <span className="font-mono font-medium">&lt;{node.name} /&gt;</span>
         {Object.entries(node.props).map(([k, v]) => (
-          <span key={k} className="rounded bg-[#DAF5EE] px-1 font-mono text-[10px] text-[#004346] dark:bg-[#004346] dark:text-[#DAF5EE]">{v === true ? k : `${k}=${v}`}</span>
+          <span key={k} className="rounded bg-[#004346] px-1 font-mono text-[10px] text-[#DAF5EE]">{v === true ? k : `${k}=${v}`}</span>
         ))}
         {children}
       </div>
@@ -130,9 +130,9 @@ export function CanvasPreview() {
   const activeViewport = VIEWPORTS.find((v) => v.id === viewport)!;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-[#DAF5EE] bg-white px-3 text-xs dark:border-[#004346] dark:bg-[#172A3A]">
-        <div className="flex items-center rounded-md bg-[#DAF5EE]/50 p-0.5 dark:bg-[#004346]/40" role="group" aria-label="Viewport preset">
+    <div className="flex h-full flex-col bg-[#080C0E]">
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-[#004346]/70 bg-[#080C0E] px-3 text-xs text-[#F2FBF9]">
+        <div className="flex items-center rounded-md bg-[#172A3A] p-0.5 border border-[#004346]/50" role="group" aria-label="Viewport preset">
           {VIEWPORTS.map((vp) => {
             const Icon = vp.icon;
             const active = vp.id === viewport;
@@ -144,7 +144,7 @@ export function CanvasPreview() {
                 aria-label={vp.label}
                 aria-pressed={active}
                 className={`flex cursor-pointer items-center gap-1 rounded px-2 py-0.5 text-[11px] transition-colors ${
-                  active ? "bg-white text-[#172A3A] shadow-xs dark:bg-[#004346] dark:text-[#F2FBF9]" : "text-[#004346]/70 hover:text-[#172A3A] dark:text-[#DAF5EE]/70 dark:hover:text-[#F2FBF9]"
+                  active ? "bg-[#004346] text-[#F2FBF9] shadow-xs" : "text-[#DAF5EE]/70 hover:text-[#F2FBF9]"
                 }`}
               >
                 <Icon className="size-3" aria-hidden />
@@ -154,12 +154,12 @@ export function CanvasPreview() {
           })}
         </div>
 
-        <div className="flex items-center gap-0.5 rounded-md border border-[#DAF5EE] px-1 py-0.5 dark:border-[#004346]">
+        <div className="flex items-center gap-0.5 rounded-md border border-[#004346] bg-[#172A3A]/40 px-1 py-0.5">
           <button
             type="button"
             aria-label="Zoom out"
             onClick={() => setZoom((z) => Math.max(50, z - 25))}
-            className="grid size-5 cursor-pointer place-items-center rounded text-[#004346]/70 hover:bg-[#DAF5EE] dark:text-[#DAF5EE]/70 dark:hover:bg-[#004346]"
+            className="grid size-5 cursor-pointer place-items-center rounded text-[#DAF5EE]/70 hover:bg-[#004346] hover:text-[#F2FBF9] transition-colors"
           >
             <Minus className="size-3" aria-hidden />
           </button>
@@ -167,7 +167,7 @@ export function CanvasPreview() {
             type="button"
             aria-label="Reset zoom"
             onClick={() => setZoom(100)}
-            className="w-11 cursor-pointer text-center font-mono text-[11px] text-[#004346] dark:text-[#DAF5EE]"
+            className="w-11 cursor-pointer text-center font-mono text-[11px] text-[#DAF5EE]"
           >
             {zoom}%
           </button>
@@ -175,18 +175,18 @@ export function CanvasPreview() {
             type="button"
             aria-label="Zoom in"
             onClick={() => setZoom((z) => Math.min(150, z + 25))}
-            className="grid size-5 cursor-pointer place-items-center rounded text-[#004346]/70 hover:bg-[#DAF5EE] dark:text-[#DAF5EE]/70 dark:hover:bg-[#004346]"
+            className="grid size-5 cursor-pointer place-items-center rounded text-[#DAF5EE]/70 hover:bg-[#004346] hover:text-[#F2FBF9] transition-colors"
           >
             <Plus className="size-3" aria-hidden />
           </button>
         </div>
 
         {selected && (
-          <div className="ml-auto flex items-center gap-2 font-mono text-[11px] text-[#004346]/70 dark:text-[#DAF5EE]/70">
-            <span className="font-medium text-[#172A3A] dark:text-[#F2FBF9]">{selected.type === "text" ? "#text" : `<${selected.name}>`}</span>
+          <div className="ml-auto flex items-center gap-2 font-mono text-[11px] text-[#DAF5EE]/70">
+            <span className="font-medium text-[#F2FBF9]">{selected.type === "text" ? "#text" : `<${selected.name}>`}</span>
             {shownBox && <span>{shownBox.width} × {shownBox.height}</span>}
             {!selected.editable && (
-              <span className="flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 font-sans text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              <span className="flex items-center gap-1 rounded bg-[#004346] px-1.5 py-0.5 font-sans text-amber-300">
                 <Lock className="size-3" aria-hidden /> Read-only
               </span>
             )}
@@ -194,7 +194,7 @@ export function CanvasPreview() {
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto p-8">
+      <div className="min-h-0 flex-1 overflow-auto bg-[#080C0E] p-8">
         <style>{`
           ${hoveredId && hoveredId !== selected?.id ? `[data-ir-id="${hoveredId}"] { outline: 1px dashed #09BC8A; outline-offset: 1px; }` : ""}
           ${selected && dragSize ? `[data-ir-id="${selected.id}"] { ${dragSize.width ? `width: ${dragSize.width}px !important;` : ""} ${dragSize.height ? `height: ${dragSize.height}px !important;` : ""} }` : ""}
@@ -208,7 +208,7 @@ export function CanvasPreview() {
             transform: zoom === 100 ? undefined : `scale(${zoom / 100})`,
             transformOrigin: "top center",
           }}
-          className="relative mx-auto min-h-96 cursor-default rounded-md bg-white text-[#172A3A] shadow-sm ring-1 ring-[#DAF5EE] transition-[width] duration-150 dark:ring-[#004346]"
+          className="relative mx-auto min-h-96 cursor-default rounded-md bg-white text-zinc-900 shadow-2xl ring-1 ring-[#004346] transition-[width] duration-150"
           onClick={(e) => {
             e.preventDefault();
             const id = nodeIdAt(e);

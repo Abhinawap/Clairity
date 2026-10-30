@@ -11,10 +11,13 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Clairity",
   description: "Edit your React/Next.js page visually; every Edit is a small diff in your own code.",
+  icons: {
+    icon: "/logos/favicon.png",
+  },
 };
 
-// Runs before paint so a saved or system dark theme never flashes light first.
-const themeScript = `if (localStorage.theme === "dark" || (!localStorage.theme && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark")`;
+// Runs before paint so off-black dark theme is applied immediately without flash
+const themeScript = `if (localStorage.theme !== "light") document.documentElement.classList.add("dark")`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -22,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-full font-sans bg-[#F2FBF9] text-[#172A3A] dark:bg-[#172A3A] dark:text-[#F2FBF9]">{children}</body>
+      <body className="h-full font-sans bg-[#080C0E] text-[#F2FBF9] selection:bg-[#004346] selection:text-[#DAF5EE]">{children}</body>
     </html>
   );
 }

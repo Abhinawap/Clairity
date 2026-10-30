@@ -45,7 +45,7 @@ export function StyleField({
 
   return (
     <label className="flex min-w-0 items-center gap-1.5">
-      <span className={`${compact ? "w-11" : "w-20"} shrink-0 truncate text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70`}>{label}</span>
+      <span className={`${compact ? "w-11" : "w-20"} shrink-0 truncate text-xs text-[#DAF5EE]/70`}>{label}</span>
       <span className="flex min-w-0 flex-1 items-center gap-1.5">
         {swatch && (
           <input
@@ -57,7 +57,7 @@ export function StyleField({
               setDraft(e.target.value);
               commit(e.target.value);
             }}
-            className="size-6 shrink-0 cursor-pointer rounded border border-[#DAF5EE] bg-transparent disabled:cursor-not-allowed dark:border-[#004346]"
+            className="size-6 shrink-0 cursor-pointer rounded border border-[#004346] bg-transparent disabled:cursor-not-allowed"
           />
         )}
         <input
@@ -80,7 +80,7 @@ export function StyleField({
               }
             }
           }}
-          className="h-7 w-full min-w-0 rounded-md border border-[#DAF5EE] bg-transparent px-2 font-mono text-xs text-[#172A3A] placeholder:text-[#004346]/40 focus:border-[#09BC8A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#004346] dark:text-[#F2FBF9] dark:placeholder:text-[#DAF5EE]/40"
+          className="h-7 w-full min-w-0 rounded-md border border-[#004346] bg-[#172A3A]/70 px-2 font-mono text-xs text-[#F2FBF9] placeholder:text-[#DAF5EE]/40 focus:border-[#09BC8A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
         />
       </span>
     </label>
