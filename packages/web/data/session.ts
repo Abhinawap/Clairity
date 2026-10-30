@@ -86,8 +86,12 @@ function applyMessage(state: SessionState, message: ProtocolMessage): SessionSta
   }
 }
 
-export function createSession(link: ExtensionLink) {
-  const session = createStore<SessionState>()((set, get) => ({
+// Pure: builds the store only, opens nothing. Safe to call from a React lazy useState initializer,
+// which Strict Mode may invoke twice in dev and discard one result of — building a store has no
+// side effect to leak. See connectSession, which does the actual (impure) link.open() and belongs
+// in a useEffect instead, so Strict Mode's setup->cleanup->setup dev check closes what it opens.
+export function createSessionStore(link: ExtensionLink) {
+  return createStore<SessionState>()((set, get) => ({
     roots: [],
     connection: "connecting",
     sources: {},
@@ -109,9 +113,20 @@ export function createSession(link: ExtensionLink) {
       if (proposal) link.send({ type: "proposal:apply", proposalId: proposal.id, acceptedChangeIds });
     },
   }));
+}
+
+export function connectSession(session: ReturnType<typeof createSessionStore>, link: ExtensionLink): void {
   link.open(
     (message) => session.setState((state) => applyMessage(state, message)),
     (connection) => session.setState({ connection }),
   );
+}
+
+// Convenience for non-React callers (tests, and anywhere connecting right away is fine): builds the
+// store and opens it immediately, synchronously. React code should use createSessionStore +
+// connectSession instead, split across a lazy initializer and a useEffect — see session-provider.tsx.
+export function createSession(link: ExtensionLink) {
+  const session = createSessionStore(link);
+  connectSession(session, link);
   return session;
 }
