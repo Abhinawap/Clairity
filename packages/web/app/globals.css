@@ -3,6 +3,17 @@
 @source "../../parser/test/fixtures";
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: var(--font-plus-jakarta-sans), "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --color-brand-offblack: #080C0E;
+  --color-brand-navy: #172A3A;
+  --color-brand-teal: #004346;
+  --color-brand-emerald: #09BC8A;
+  --color-brand-mint: #DAF5EE;
+  --color-brand-foam: #F2FBF9;
+}
+
 /* Zero-specificity defaults so unstyled fixture tags look like a real page while any class or inline style wins. */
 :where([data-canvas-artboard] section) {
   padding: 3.5rem 1.5rem;
@@ -10,7 +21,7 @@
 :where([data-canvas-artboard] h1) {
   line-height: 1.1;
   letter-spacing: -0.025em;
-  color: #09090b;
+  color: #172A3A;
 }
 :where([data-canvas-artboard] a[data-ir-id]),
 :where([data-canvas-artboard] button[data-ir-id]) {
@@ -24,11 +35,11 @@
   border-radius: 0.5rem;
 }
 :where([data-canvas-artboard] a[data-ir-id]) {
-  background-color: #2563eb;
+  background-color: #09BC8A;
   color: #ffffff;
 }
 :where([data-canvas-artboard] button[data-ir-id]) {
-  background-color: #f4f4f5;
-  color: #18181b;
-  border: 1px solid #e4e4e7;
+  background-color: #DAF5EE;
+  color: #004346;
+  border: 1px solid #004346;
 }

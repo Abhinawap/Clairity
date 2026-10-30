@@ -1,5 +1,6 @@
 "use client";
-import { ArrowRight, Code2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,22 +15,36 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
   const isLogin = mode === "login";
 
   return (
-    <div className="flex min-h-full flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <Link href="/" className="flex items-center gap-2 focus-visible:outline-2 focus-visible:outline-blue-500">
-          <span className="grid size-7 place-items-center rounded-md bg-blue-600 text-xs font-bold text-white">C</span>
-          <span className="font-semibold tracking-tight">Clairity</span>
+    <div className="flex min-h-full flex-col bg-[#F2FBF9] text-[#172A3A] dark:bg-[#080C0E] dark:text-[#F2FBF9] transition-colors">
+      <header className="flex h-14 items-center justify-between border-b border-[#DAF5EE] bg-white px-6 dark:border-[#004346]/70 dark:bg-[#080C0E] transition-colors">
+        <Link href="/" className="flex items-center focus-visible:outline-2 focus-visible:outline-[#09BC8A]">
+          <Image
+            src="/logos/Clairity_Black.svg"
+            alt="Clairity"
+            width={117}
+            height={24}
+            priority
+            className="h-6 w-auto dark:hidden"
+          />
+          <Image
+            src="/logos/Clairity_White.svg"
+            alt="Clairity"
+            width={117}
+            height={24}
+            priority
+            className="hidden h-6 w-auto dark:block"
+          />
         </Link>
         <ThemeToggle />
       </header>
 
       <main className="grid flex-1 place-items-center p-6">
-        <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="w-full max-w-sm rounded-xl border border-[#DAF5EE] bg-white p-6 shadow-sm dark:border-[#004346]/80 dark:bg-[#172A3A] dark:shadow-2xl transition-colors">
           <div className="space-y-1 text-center">
-            <h1 className="text-lg font-semibold tracking-tight">
+            <h1 className="text-lg font-semibold tracking-tight text-[#172A3A] dark:text-[#F2FBF9]">
               {isLogin ? "Sign in to Clairity" : "Create your Clairity account"}
             </h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70">
               {isLogin
                 ? "Connect your VS Code or Cursor workspace to edit your React/Next.js components visually."
                 : "Start editing your real React/Next.js source files visually with reviewable code diffs."}
@@ -39,16 +54,31 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           <button
             type="button"
             onClick={() => router.push("/")}
-            className="mt-5 flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 text-xs font-medium text-zinc-800 hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-blue-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+            className="mt-5 flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-[#DAF5EE] bg-[#F2FBF9] text-xs font-medium text-[#172A3A] hover:bg-[#DAF5EE] focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:border-[#004346] dark:bg-[#004346]/40 dark:text-[#F2FBF9] dark:hover:bg-[#004346] transition-colors"
           >
-            <Code2 className="size-4" aria-hidden />
+            <Image
+              src="/logos/GitHub_Invertocat_Black.svg"
+              alt=""
+              width={16}
+              height={16}
+              className="size-4 dark:hidden"
+              aria-hidden
+            />
+            <Image
+              src="/logos/GitHub_Invertocat_White.svg"
+              alt=""
+              width={16}
+              height={16}
+              className="hidden size-4 dark:block"
+              aria-hidden
+            />
             <span>Continue with GitHub</span>
           </button>
 
-          <div className="my-4 flex items-center gap-3 text-[11px] text-zinc-400">
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+          <div className="my-4 flex items-center gap-3 text-[11px] text-[#004346]/60 dark:text-[#DAF5EE]/60">
+            <span className="h-px flex-1 bg-[#DAF5EE] dark:bg-[#004346]" />
             <span>or continue with email</span>
-            <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
+            <span className="h-px flex-1 bg-[#DAF5EE] dark:bg-[#004346]" />
           </div>
 
           <form
@@ -60,7 +90,7 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
           >
             {!isLogin && (
               <label className="block space-y-1">
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">Full name</span>
+                <span className="font-medium text-[#004346] dark:text-[#DAF5EE]">Full name</span>
                 <input
                   type="text"
                   required
@@ -68,13 +98,13 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ada Lovelace"
-                  className="h-8 w-full rounded-md border border-zinc-200 bg-transparent px-2.5 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-700"
+                  className="h-8 w-full rounded-md border border-[#DAF5EE] bg-[#F2FBF9]/60 px-2.5 text-xs text-[#172A3A] placeholder:text-[#004346]/40 focus:border-[#09BC8A] focus:outline-none dark:border-[#004346] dark:bg-[#080C0E]/70 dark:text-[#F2FBF9] dark:placeholder:text-[#DAF5EE]/40"
                 />
               </label>
             )}
 
             <label className="block space-y-1">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Email address</span>
+              <span className="font-medium text-[#004346] dark:text-[#DAF5EE]">Email address</span>
               <input
                 type="email"
                 required
@@ -82,12 +112,12 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="h-8 w-full rounded-md border border-zinc-200 bg-transparent px-2.5 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-700"
+                className="h-8 w-full rounded-md border border-[#DAF5EE] bg-[#F2FBF9]/60 px-2.5 text-xs text-[#172A3A] placeholder:text-[#004346]/40 focus:border-[#09BC8A] focus:outline-none dark:border-[#004346] dark:bg-[#080C0E]/70 dark:text-[#F2FBF9] dark:placeholder:text-[#DAF5EE]/40"
               />
             </label>
 
             <label className="block space-y-1">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Password</span>
+              <span className="font-medium text-[#004346] dark:text-[#DAF5EE]">Password</span>
               <input
                 type="password"
                 required
@@ -96,31 +126,31 @@ export function AuthPage({ mode }: { mode: "login" | "register" }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="h-8 w-full rounded-md border border-zinc-200 bg-transparent px-2.5 text-xs focus:border-blue-500 focus:outline-none dark:border-zinc-700"
+                className="h-8 w-full rounded-md border border-[#DAF5EE] bg-[#F2FBF9]/60 px-2.5 text-xs text-[#172A3A] placeholder:text-[#004346]/40 focus:border-[#09BC8A] focus:outline-none dark:border-[#004346] dark:bg-[#080C0E]/70 dark:text-[#F2FBF9] dark:placeholder:text-[#DAF5EE]/40"
               />
             </label>
 
             <button
               type="submit"
-              className="mt-2 inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md bg-blue-600 text-xs font-medium text-white hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="mt-2 inline-flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#09BC8A] text-xs font-semibold text-white shadow-xs hover:bg-[#09BC8A]/90 focus-visible:outline-2 focus-visible:outline-[#09BC8A] dark:text-[#080C0E] transition-colors"
             >
               <span>{isLogin ? "Sign in" : "Create account"}</span>
               <ArrowRight className="size-3.5" aria-hidden />
             </button>
           </form>
 
-          <p className="mt-5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="mt-5 text-center text-xs text-[#004346]/70 dark:text-[#DAF5EE]/70">
             {isLogin ? (
               <>
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                <Link href="/register" className="font-medium text-[#09BC8A] hover:underline">
                   Create one
                 </Link>
               </>
             ) : (
               <>
                 Already have an account?{" "}
-                <Link href="/login" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                <Link href="/login" className="font-medium text-[#09BC8A] hover:underline">
                   Sign in
                 </Link>
               </>
